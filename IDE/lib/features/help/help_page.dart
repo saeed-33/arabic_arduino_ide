@@ -1,0 +1,52 @@
+import 'package:flutter/material.dart';
+
+class HelpPage extends StatelessWidget {
+  const HelpPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Text('المساعدة', style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 16),
+        const _HelpItem(
+          title: 'ما هي بيئة أردوينو العربية؟',
+          body: 'تطبيق ويندوز بسيط لتعليم برمجة الأردوينو باستخدام لغة عربية.',
+        ),
+        const _HelpItem(
+          title: 'وضع المحترف',
+          body:
+              'مساحة كتابة للكود العربي، وسنضيف إليها المحرر والملفات والتشغيل تدريجيا.',
+        ),
+        const _HelpItem(
+          title: 'وضع التعلم',
+          body:
+              'واجهة بلوكات للأطفال والمبتدئين، وستأتي بعد إكمال وضع المحترف.',
+        ),
+      ],
+    );
+  }
+}
+
+class _HelpItem extends StatelessWidget {
+  const _HelpItem({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(body),
+        ],
+      ),
+    );
+  }
+}
