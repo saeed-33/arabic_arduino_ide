@@ -106,6 +106,31 @@ class ProModeSessionController extends ChangeNotifier {
     }
   }
 
+  void runProgram() {
+    _setStatus(
+      'التشغيل غير متاح بعد. سنضيف المترجم وتجهيز الأردوينو في خطوة لاحقة.',
+      ProModeLogLevel.warning,
+    );
+  }
+
+  void stopProgram() {
+    _setStatus('لا توجد عملية تشغيل لإيقافها حاليا.', ProModeLogLevel.info);
+  }
+
+  void restartProgram() {
+    _setStatus(
+      'إعادة التشغيل غير متاحة بعد لأنها تحتاج إلى تشغيل فعلي أولا.',
+      ProModeLogLevel.warning,
+    );
+  }
+
+  void debugProgram() {
+    _setStatus(
+      'التصحيح غير متاح بعد. سنحدده بعد بناء المترجم وطبقة الأجهزة.',
+      ProModeLogLevel.warning,
+    );
+  }
+
   void clearLogs() {
     _logs.clear();
     _setStatus('تم مسح السجلات.', ProModeLogLevel.info);

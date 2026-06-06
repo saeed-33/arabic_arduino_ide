@@ -38,6 +38,10 @@ class _ProModePageState extends State<ProModePage> {
                 onNewFile: _sessionController.createNewFile,
                 onOpenFile: _sessionController.openFile,
                 onSaveFile: _sessionController.saveFile,
+                onRun: _sessionController.runProgram,
+                onStop: _sessionController.stopProgram,
+                onRestart: _sessionController.restartProgram,
+                onDebug: _sessionController.debugProgram,
               ),
               const SizedBox(height: 12),
               Expanded(
@@ -85,11 +89,19 @@ class _CommandBar extends StatelessWidget {
     required this.onNewFile,
     required this.onOpenFile,
     required this.onSaveFile,
+    required this.onRun,
+    required this.onStop,
+    required this.onRestart,
+    required this.onDebug,
   });
 
   final Future<void> Function() onNewFile;
   final Future<void> Function() onOpenFile;
   final Future<void> Function() onSaveFile;
+  final VoidCallback onRun;
+  final VoidCallback onStop;
+  final VoidCallback onRestart;
+  final VoidCallback onDebug;
 
   @override
   Widget build(BuildContext context) {
@@ -128,22 +140,22 @@ class _CommandBar extends StatelessWidget {
                     _CommandButton(
                       icon: Icons.play_arrow,
                       label: 'تشغيل',
-                      onPressed: () {},
+                      onPressed: onRun,
                     ),
                     _CommandButton(
                       icon: Icons.stop,
                       label: 'إيقاف',
-                      onPressed: () {},
+                      onPressed: onStop,
                     ),
                     _CommandButton(
                       icon: Icons.restart_alt,
                       label: 'إعادة تشغيل',
-                      onPressed: () {},
+                      onPressed: onRestart,
                     ),
                     _CommandButton(
                       icon: Icons.bug_report_outlined,
                       label: 'تصحيح',
-                      onPressed: () {},
+                      onPressed: onDebug,
                     ),
                   ],
                 ),

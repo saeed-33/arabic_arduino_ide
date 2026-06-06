@@ -79,6 +79,12 @@ Current Step 5 output/log baseline:
 - Pro Mode separates UI, session state, file service, and log model.
 - Run, debug, terminal execution, compiler, and device behavior are still not implemented.
 
+Current Step 6 run/debug feedback baseline:
+
+- Run, stop, restart, and debug buttons write clear Arabic status/log messages.
+- These actions are intentionally inactive placeholders.
+- No compiler, terminal process, board detection, upload, or debug engine exists yet.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.
