@@ -85,6 +85,13 @@ Current Step 6 run/debug feedback baseline:
 - These actions are intentionally inactive placeholders.
 - No compiler, terminal process, board detection, upload, or debug engine exists yet.
 
+Current Step 7 settings baseline:
+
+- Settings model exists for Arduino CLI path, default board, serial port, and libraries server URL.
+- Settings controller keeps values in memory only.
+- Settings UI exposes Arabic fields for the current configuration placeholders.
+- No persistence, validation, device detection, toolchain install, or server connection yet.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.

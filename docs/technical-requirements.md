@@ -80,6 +80,14 @@ Feature code should stay separated by responsibility:
 
 - UI widgets coordinate user interaction and rendering.
 - Application services perform platform and file operations.
+- Controllers own feature state and orchestration.
+- Domain models represent structured data without UI dependencies.
 - Shared behavior should move into `lib/shared/` only when it is used by more than one feature.
 
 Avoid large "god classes" that mix UI layout, platform calls, parsing, compiler behavior, logging, and device control.
+
+## Current Feature State Storage
+
+Settings are in-memory only in Step 7.
+
+No persistent storage package is installed yet. A later step should choose a Windows-friendly local storage strategy before settings are expected to survive app restarts.
