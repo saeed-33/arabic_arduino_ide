@@ -38,6 +38,14 @@ Planned features:
   - Save file.
 - Help section.
 
+Current Step 2 layout baseline:
+
+- Top command bar.
+- Main editor region placeholder.
+- Bottom output/logs region placeholder.
+- Side devices/tools panel placeholder.
+- No real editor, terminal, compiler, debugger, or device logic yet.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.
