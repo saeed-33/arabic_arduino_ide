@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 class ProModePage extends StatefulWidget {
@@ -22,6 +25,8 @@ class _ProModePageState extends State<ProModePage> {
 
   late final TextEditingController _editorController;
   bool _hasUnsavedChanges = false;
+  String? _currentFilePath;
+  String _lastSavedText = _initialCode;
 
   @override
   void initState() {
@@ -39,7 +44,7 @@ class _ProModePageState extends State<ProModePage> {
   }
 
   void _handleCodeChanged() {
-    final hasChanges = _editorController.text != _initialCode;
+    final hasChanges = _editorController.text != _lastSavedText;
     if (hasChanges == _hasUnsavedChanges) {
       return;
     }
@@ -49,13 +54,89 @@ class _ProModePageState extends State<ProModePage> {
     });
   }
 
+  void _markSaved(String filePath) {
+    setState(() {
+      _currentFilePath = filePath;
+      _lastSavedText = _editorController.text;
+      _hasUnsavedChanges = false;
+    });
+  }
+
+  void _setEditorText(String text) {
+    _editorController.text = text;
+    _editorController.selection = TextSelection.collapsed(offset: text.length);
+  }
+
+  Future<void> _createNewFile() async {
+    setState(() {
+      _currentFilePath = null;
+      _lastSavedText = '';
+      _hasUnsavedChanges = false;
+    });
+    _setEditorText('');
+  }
+
+  Future<void> _openFile() async {
+    const textFileType = XTypeGroup(
+      label: 'Arabic Arduino files',
+      extensions: ['arab', 'ino', 'txt'],
+    );
+
+    final file = await openFile(acceptedTypeGroups: [textFileType]);
+    if (file == null) {
+      return;
+    }
+
+    final content = await file.readAsString();
+    _setEditorText(content);
+    _markSaved(file.path);
+  }
+
+  Future<void> _saveFile() async {
+    final existingPath = _currentFilePath;
+    if (existingPath != null) {
+      await File(existingPath).writeAsString(_editorController.text);
+      _markSaved(existingPath);
+      return;
+    }
+
+    const textFileType = XTypeGroup(
+      label: 'Arabic Arduino files',
+      extensions: ['arab', 'ino', 'txt'],
+    );
+
+    final savePath = await getSaveLocation(
+      acceptedTypeGroups: [textFileType],
+      suggestedName: 'برنامج_عربي.arab',
+    );
+    if (savePath == null) {
+      return;
+    }
+
+    await File(savePath.path).writeAsString(_editorController.text);
+    _markSaved(savePath.path);
+  }
+
+  String get _fileLabel {
+    final path = _currentFilePath;
+    if (path == null) {
+      return 'ملف جديد';
+    }
+
+    return path.split(Platform.pathSeparator).last;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          const _CommandBar(),
+          _CommandBar(
+            onNewFile: _createNewFile,
+            onOpenFile: _openFile,
+            onSaveFile: _saveFile,
+          ),
           const SizedBox(height: 12),
           Expanded(
             child: Row(
@@ -67,6 +148,7 @@ class _ProModePageState extends State<ProModePage> {
                       Expanded(
                         child: _ArabicCodeEditor(
                           controller: _editorController,
+                          fileLabel: _fileLabel,
                           hasUnsavedChanges: _hasUnsavedChanges,
                         ),
                       ),
@@ -87,7 +169,15 @@ class _ProModePageState extends State<ProModePage> {
 }
 
 class _CommandBar extends StatelessWidget {
-  const _CommandBar();
+  const _CommandBar({
+    required this.onNewFile,
+    required this.onOpenFile,
+    required this.onSaveFile,
+  });
+
+  final Future<void> Function() onNewFile;
+  final Future<void> Function() onOpenFile;
+  final Future<void> Function() onSaveFile;
 
   @override
   Widget build(BuildContext context) {
@@ -104,17 +194,23 @@ class _CommandBar extends StatelessWidget {
                     _CommandButton(
                       icon: Icons.note_add_outlined,
                       label: 'ملف جديد',
-                      onPressed: () {},
+                      onPressed: () {
+                        onNewFile();
+                      },
                     ),
                     _CommandButton(
                       icon: Icons.folder_open_outlined,
                       label: 'فتح',
-                      onPressed: () {},
+                      onPressed: () {
+                        onOpenFile();
+                      },
                     ),
                     _CommandButton(
                       icon: Icons.save_outlined,
                       label: 'حفظ',
-                      onPressed: () {},
+                      onPressed: () {
+                        onSaveFile();
+                      },
                     ),
                     const SizedBox(width: 16),
                     _CommandButton(
@@ -180,10 +276,12 @@ class _CommandButton extends StatelessWidget {
 class _ArabicCodeEditor extends StatelessWidget {
   const _ArabicCodeEditor({
     required this.controller,
+    required this.fileLabel,
     required this.hasUnsavedChanges,
   });
 
   final TextEditingController controller;
+  final String fileLabel;
   final bool hasUnsavedChanges;
 
   @override
@@ -195,7 +293,8 @@ class _ArabicCodeEditor extends StatelessWidget {
           _PanelHeader(
             icon: Icons.edit_note,
             title: 'المحرر',
-            trailing: hasUnsavedChanges ? 'تغييرات غير محفوظة' : 'محفوظ مؤقتا',
+            trailing:
+                '$fileLabel - ${hasUnsavedChanges ? 'تغييرات غير محفوظة' : 'محفوظ'}',
           ),
           Expanded(
             child: Container(

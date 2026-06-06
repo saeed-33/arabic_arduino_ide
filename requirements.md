@@ -55,6 +55,15 @@ Current Step 3 editor baseline:
 - File buttons are still visual placeholders only.
 - No parser, compiler, terminal, debugger, save/open, or device logic yet.
 
+Current Step 4 file baseline:
+
+- New file clears the editor and starts an unnamed buffer.
+- Open loads local `.arab`, `.ino`, or `.txt` files.
+- Save writes the current editor content to the selected local file.
+- Existing opened/saved files save back to the same path.
+- Editor header shows the current file name and save state.
+- Run, debug, terminal, compiler, and device behavior are still not implemented.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.
