@@ -70,6 +70,15 @@ Technical documentation baseline:
 - Native Flutter desktop plugins require a full app restart/rebuild after being added.
 - File platform behavior should live outside UI widgets to preserve separation of concerns.
 
+Current Step 5 output/log baseline:
+
+- File actions write structured log entries.
+- Output panel shows the newest status.
+- Output panel shows a scrollable log list.
+- Logs can be cleared from the output panel.
+- Pro Mode separates UI, session state, file service, and log model.
+- Run, debug, terminal execution, compiler, and device behavior are still not implemented.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.

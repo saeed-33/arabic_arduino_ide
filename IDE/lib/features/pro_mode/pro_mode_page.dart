@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
-import 'application/pro_mode_file_service.dart';
+import 'application/pro_mode_session_controller.dart';
+import 'domain/pro_mode_log_entry.dart';
 
 class ProModePage extends StatefulWidget {
   const ProModePage({super.key});
@@ -12,186 +11,71 @@ class ProModePage extends StatefulWidget {
 }
 
 class _ProModePageState extends State<ProModePage> {
-  static const _initialCode = '''
-ابدأ
-  اجعل المنفذ 13 مخرج
-
-كرر دائما
-  شغّل المنفذ 13
-  انتظر 1000
-  أطفئ المنفذ 13
-  انتظر 1000
-نهاية
-''';
-
-  late final TextEditingController _editorController;
-  final ProModeFileService _fileService = ProModeFileService();
-  bool _hasUnsavedChanges = false;
-  String? _currentFilePath;
-  String _lastSavedText = _initialCode;
-  String? _statusMessage;
+  late final ProModeSessionController _sessionController;
 
   @override
   void initState() {
     super.initState();
-    _editorController = TextEditingController(text: _initialCode);
-    _editorController.addListener(_handleCodeChanged);
+    _sessionController = ProModeSessionController();
   }
 
   @override
   void dispose() {
-    _editorController
-      ..removeListener(_handleCodeChanged)
-      ..dispose();
+    _sessionController.dispose();
     super.dispose();
-  }
-
-  void _handleCodeChanged() {
-    final hasChanges = _editorController.text != _lastSavedText;
-    if (hasChanges == _hasUnsavedChanges) {
-      return;
-    }
-
-    setState(() {
-      _hasUnsavedChanges = hasChanges;
-    });
-  }
-
-  void _markSaved(String filePath) {
-    setState(() {
-      _currentFilePath = filePath;
-      _lastSavedText = _editorController.text;
-      _hasUnsavedChanges = false;
-    });
-  }
-
-  void _setEditorText(String text) {
-    _editorController.text = text;
-    _editorController.selection = TextSelection.collapsed(offset: text.length);
-  }
-
-  Future<void> _createNewFile() async {
-    setState(() {
-      _currentFilePath = null;
-      _lastSavedText = '';
-      _hasUnsavedChanges = false;
-      _statusMessage = 'تم إنشاء ملف جديد.';
-    });
-    _setEditorText('');
-  }
-
-  Future<void> _openFile() async {
-    try {
-      final file = await _fileService.openCodeFile();
-      if (file == null) {
-        _showStatus('تم إلغاء فتح الملف.');
-        return;
-      }
-
-      _setEditorText(file.content);
-      _markSaved(file.path);
-      _showStatus(
-        'تم فتح الملف: ${_fileService.displayNameForPath(file.path)}',
-      );
-    } on FileDialogUnavailableException {
-      _showFileDialogUnavailableMessage();
-    } on FileSystemException catch (error) {
-      _showStatus('تعذر فتح الملف: ${error.message}');
-    }
-  }
-
-  Future<void> _saveFile() async {
-    try {
-      final savedPath = await _fileService.saveCodeFile(
-        content: _editorController.text,
-        currentPath: _currentFilePath,
-      );
-      if (savedPath == null) {
-        _showStatus('تم إلغاء حفظ الملف.');
-        return;
-      }
-
-      _markSaved(savedPath);
-      _showStatus(
-        'تم حفظ الملف: ${_fileService.displayNameForPath(savedPath)}',
-      );
-    } on FileDialogUnavailableException {
-      _showFileDialogUnavailableMessage();
-    } on FileSystemException catch (error) {
-      _showStatus('تعذر حفظ الملف: ${error.message}');
-    }
-  }
-
-  String get _fileLabel {
-    final path = _currentFilePath;
-    if (path == null) {
-      return 'ملف جديد';
-    }
-
-    return _fileService.displayNameForPath(path);
-  }
-
-  void _showFileDialogUnavailableMessage() {
-    _showStatus(
-      'خدمة اختيار الملفات غير جاهزة. أوقف التطبيق ثم شغّله من جديد بعد إضافة الحزمة.',
-    );
-  }
-
-  void _showStatus(String message) {
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _statusMessage = message;
-    });
-
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _CommandBar(
-            onNewFile: _createNewFile,
-            onOpenFile: _openFile,
-            onSaveFile: _saveFile,
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: _ArabicCodeEditor(
-                          controller: _editorController,
-                          fileLabel: _fileLabel,
-                          hasUnsavedChanges: _hasUnsavedChanges,
-                        ),
+    return AnimatedBuilder(
+      animation: _sessionController,
+      builder: (context, child) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _CommandBar(
+                onNewFile: _sessionController.createNewFile,
+                onOpenFile: _sessionController.openFile,
+                onSaveFile: _sessionController.saveFile,
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: _ArabicCodeEditor(
+                              controller: _sessionController.editorController,
+                              fileLabel: _sessionController.fileLabel,
+                              hasUnsavedChanges:
+                                  _sessionController.hasUnsavedChanges,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 190,
+                            child: _OutputPanel(
+                              statusMessage: _sessionController.statusMessage,
+                              logs: _sessionController.logs,
+                              onClearLogs: _sessionController.clearLogs,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 170,
-                        child: _OutputPanel(statusMessage: _statusMessage),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 12),
+                    const SizedBox(width: 260, child: _DeviceToolsPanel()),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                const SizedBox(width: 260, child: _DeviceToolsPanel()),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -353,9 +237,15 @@ class _ArabicCodeEditor extends StatelessWidget {
 }
 
 class _OutputPanel extends StatelessWidget {
-  const _OutputPanel({required this.statusMessage});
+  const _OutputPanel({
+    required this.statusMessage,
+    required this.logs,
+    required this.onClearLogs,
+  });
 
-  final String? statusMessage;
+  final String statusMessage;
+  final List<ProModeLogEntry> logs;
+  final VoidCallback onClearLogs;
 
   @override
   Widget build(BuildContext context) {
@@ -363,22 +253,74 @@ class _OutputPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _PanelHeader(
+          _PanelHeader(
             icon: Icons.terminal,
             title: 'المخرجات والسجلات',
-            trailing: 'جاهز',
+            trailing: statusMessage,
+            action: IconButton(
+              tooltip: 'مسح السجلات',
+              onPressed: onClearLogs,
+              icon: const Icon(Icons.clear_all, size: 20),
+            ),
           ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                statusMessage ?? 'ستظهر رسائل التشغيل، الأخطاء، والسجلات هنا.',
-              ),
-            ),
+            child: logs.isEmpty
+                ? const Center(child: Text('لا توجد سجلات بعد.'))
+                : ListView.separated(
+                    reverse: true,
+                    padding: const EdgeInsets.all(12),
+                    itemBuilder: (context, index) {
+                      return _LogEntryRow(log: logs[index]);
+                    },
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 8),
+                    itemCount: logs.length,
+                  ),
           ),
         ],
       ),
     );
+  }
+}
+
+class _LogEntryRow extends StatelessWidget {
+  const _LogEntryRow({required this.log});
+
+  final ProModeLogEntry log;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colorForLevel(context, log.level);
+    final time = TimeOfDay.fromDateTime(log.createdAt).format(context);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(_iconForLevel(log.level), color: color, size: 18),
+        const SizedBox(width: 8),
+        Text(time, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(width: 8),
+        Expanded(child: Text(log.message)),
+      ],
+    );
+  }
+
+  Color _colorForLevel(BuildContext context, ProModeLogLevel level) {
+    return switch (level) {
+      ProModeLogLevel.info => Theme.of(context).colorScheme.primary,
+      ProModeLogLevel.success => Colors.green.shade700,
+      ProModeLogLevel.warning => Colors.orange.shade800,
+      ProModeLogLevel.error => Theme.of(context).colorScheme.error,
+    };
+  }
+
+  IconData _iconForLevel(ProModeLogLevel level) {
+    return switch (level) {
+      ProModeLogLevel.info => Icons.info_outline,
+      ProModeLogLevel.success => Icons.check_circle_outline,
+      ProModeLogLevel.warning => Icons.warning_amber_outlined,
+      ProModeLogLevel.error => Icons.error_outline,
+    };
   }
 }
 
@@ -433,16 +375,18 @@ class _PanelHeader extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.trailing,
+    this.action,
   });
 
   final IconData icon;
   final String title;
   final String trailing;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
@@ -453,7 +397,14 @@ class _PanelHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Text(title, style: Theme.of(context).textTheme.titleMedium),
           const Spacer(),
-          Text(trailing, style: Theme.of(context).textTheme.bodySmall),
+          Flexible(
+            child: Text(
+              trailing,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          if (action != null) ...[const SizedBox(width: 8), action!],
         ],
       ),
     );
