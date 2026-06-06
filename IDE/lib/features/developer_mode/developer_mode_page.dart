@@ -4,6 +4,7 @@ import '../settings/domain/ide_settings.dart';
 import 'application/developer_diagnostics_controller.dart';
 import 'domain/ast_node_info.dart';
 import 'domain/build_stage_info.dart';
+import 'domain/parse_tree_node_info.dart';
 import 'domain/raw_diagnostic.dart';
 import 'domain/token_info.dart';
 
@@ -32,7 +33,7 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 8,
+      length: 9,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -53,6 +54,7 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
           const TabBar(
             isScrollable: true,
             tabs: [
+              Tab(text: 'Parse Tree'),
               Tab(text: 'AST'),
               Tab(text: 'Tokens'),
               Tab(text: 'Raw Errors'),
@@ -66,6 +68,7 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
           Expanded(
             child: TabBarView(
               children: [
+                _ParseTreePanel(root: _controller.parseTreeRoot),
                 _AstPanel(root: _controller.astRoot),
                 _TokensPanel(tokens: _controller.tokens),
                 _RawErrorsPanel(diagnostics: _controller.rawDiagnostics),
@@ -79,6 +82,50 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ParseTreePanel extends StatelessWidget {
+  const _ParseTreePanel({required this.root});
+
+  final ParseTreeNodeInfo root;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [_ParseTreeNodeTile(node: root)],
+    );
+  }
+}
+
+class _ParseTreeNodeTile extends StatelessWidget {
+  const _ParseTreeNodeTile({required this.node});
+
+  final ParseTreeNodeInfo node;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = '${node.rule}: ${node.text}';
+    final subtitle = 'line ${node.line}, column ${node.column}';
+
+    if (node.children.isEmpty) {
+      return ListTile(
+        dense: true,
+        leading: const Icon(Icons.schema_outlined),
+        title: Text(title),
+        subtitle: Text(subtitle),
+      );
+    }
+
+    return ExpansionTile(
+      leading: const Icon(Icons.schema_outlined),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      children: node.children
+          .map((child) => _ParseTreeNodeTile(node: child))
+          .toList(),
     );
   }
 }

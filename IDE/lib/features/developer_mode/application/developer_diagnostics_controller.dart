@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../domain/ast_node_info.dart';
 import '../domain/build_stage_info.dart';
+import '../domain/parse_tree_node_info.dart';
 import '../domain/raw_diagnostic.dart';
 import '../domain/token_info.dart';
 
@@ -49,6 +50,94 @@ class DeveloperDiagnosticsController extends ChangeNotifier {
           ),
         ],
       ),
+    ],
+  );
+
+  ParseTreeNodeInfo get parseTreeRoot => const ParseTreeNodeInfo(
+    rule: 'program',
+    text: 'ابدأ ... نهاية',
+    line: 1,
+    column: 1,
+    children: [
+      ParseTreeNodeInfo(
+        rule: 'setup_block',
+        text: 'ابدأ اجعل المنفذ 13 مخرج',
+        line: 1,
+        column: 1,
+        children: [
+          ParseTreeNodeInfo(
+            rule: 'START_KEYWORD',
+            text: 'ابدأ',
+            line: 1,
+            column: 1,
+          ),
+          ParseTreeNodeInfo(
+            rule: 'pin_mode_statement',
+            text: 'اجعل المنفذ 13 مخرج',
+            line: 2,
+            column: 3,
+            children: [
+              ParseTreeNodeInfo(
+                rule: 'MAKE_KEYWORD',
+                text: 'اجعل',
+                line: 2,
+                column: 3,
+              ),
+              ParseTreeNodeInfo(
+                rule: 'PIN_IDENTIFIER',
+                text: 'المنفذ',
+                line: 2,
+                column: 8,
+              ),
+              ParseTreeNodeInfo(
+                rule: 'NUMBER',
+                text: '13',
+                line: 2,
+                column: 15,
+              ),
+              ParseTreeNodeInfo(
+                rule: 'OUTPUT_KEYWORD',
+                text: 'مخرج',
+                line: 2,
+                column: 18,
+              ),
+            ],
+          ),
+        ],
+      ),
+      ParseTreeNodeInfo(
+        rule: 'loop_block',
+        text: 'كرر دائما ...',
+        line: 4,
+        column: 1,
+        children: [
+          ParseTreeNodeInfo(
+            rule: 'REPEAT_KEYWORD',
+            text: 'كرر',
+            line: 4,
+            column: 1,
+          ),
+          ParseTreeNodeInfo(
+            rule: 'FOREVER_KEYWORD',
+            text: 'دائما',
+            line: 4,
+            column: 5,
+          ),
+          ParseTreeNodeInfo(
+            rule: 'digital_write_statement',
+            text: 'شغّل المنفذ 13',
+            line: 5,
+            column: 3,
+          ),
+          ParseTreeNodeInfo(
+            rule: 'delay_statement',
+            text: 'انتظر 1000',
+            line: 6,
+            column: 3,
+          ),
+        ],
+      ),
+      ParseTreeNodeInfo(rule: 'END_KEYWORD', text: 'نهاية', line: 9, column: 1),
     ],
   );
 

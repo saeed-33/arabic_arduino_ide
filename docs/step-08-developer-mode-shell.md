@@ -20,6 +20,7 @@ IDE/lib/features/developer_mode/
 
 Developer Mode currently includes placeholder tabs for:
 
+- Parse Tree
 - AST
 - Tokens
 - Raw Errors
@@ -34,6 +35,7 @@ Developer Mode currently includes placeholder tabs for:
 The shell uses temporary diagnostic data:
 
 - Example AST tree.
+- Example parse tree.
 - Example token stream.
 - Example raw diagnostic.
 - Example friendly error preview.
@@ -51,6 +53,7 @@ Developer Mode is split by responsibility:
 - `DeveloperDiagnosticsController`
   - Temporary diagnostics source.
 - Domain models:
+  - `ParseTreeNodeInfo`
   - `AstNodeInfo`
   - `TokenInfo`
   - `RawDiagnostic`
@@ -67,6 +70,7 @@ It can expose advanced details such as raw diagnostics, AST nodes, token streams
 - Real lexer.
 - Real parser.
 - Real AST from editor content.
+- Real parse tree from compiler/parser output.
 - Semantic analysis.
 - Friendly diagnostic generation.
 - Arabic-to-Arduino/C++ code generation.

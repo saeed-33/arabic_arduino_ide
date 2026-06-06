@@ -96,8 +96,14 @@ Current Step 8 developer mode baseline:
 
 - Developer Mode shell exists as a separate feature.
 - Navigation includes `المطور`.
-- Developer Mode contains placeholder tabs for AST, tokens, raw errors, friendly errors, generated code, build pipeline, internal logs, and environment.
+- Developer Mode contains placeholder tabs for parse tree, AST, tokens, raw errors, friendly errors, generated code, build pipeline, internal logs, and environment.
 - No real lexer, parser, semantic analyzer, code generator, compiler, or device integration yet.
+
+Compiler integration note:
+
+- The compiler will be provided later by the project owner.
+- Developer Mode should be ready to display compiler/parser outputs without coupling UI widgets directly to compiler internals.
+- Parse Tree should preserve grammar structure, while AST should represent the simplified semantic tree.
 
 ### Kids Mode
 
