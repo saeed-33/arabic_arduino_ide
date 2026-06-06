@@ -6,6 +6,11 @@
 - Application framework: Flutter desktop.
 - Initial supported Flutter target: `windows`.
 
+## Language Files
+
+- Arabic Arduino source files use the `.arabic` extension.
+- The IDE may still open `.ino` and `.txt` files for interoperability/testing.
+
 ## Local Toolchain
 
 - Flutter: `3.41.6`

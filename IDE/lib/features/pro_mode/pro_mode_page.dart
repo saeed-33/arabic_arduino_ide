@@ -4,44 +4,34 @@ import 'application/pro_mode_session_controller.dart';
 import 'domain/pro_mode_log_entry.dart';
 
 class ProModePage extends StatefulWidget {
-  const ProModePage({super.key});
+  const ProModePage({super.key, required this.controller});
+
+  final ProModeSessionController controller;
 
   @override
   State<ProModePage> createState() => _ProModePageState();
 }
 
 class _ProModePageState extends State<ProModePage> {
-  late final ProModeSessionController _sessionController;
-
-  @override
-  void initState() {
-    super.initState();
-    _sessionController = ProModeSessionController();
-  }
-
-  @override
-  void dispose() {
-    _sessionController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
+    final sessionController = widget.controller;
+
     return AnimatedBuilder(
-      animation: _sessionController,
+      animation: sessionController,
       builder: (context, child) {
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               _CommandBar(
-                onNewFile: _sessionController.createNewFile,
-                onOpenFile: _sessionController.openFile,
-                onSaveFile: _sessionController.saveFile,
-                onRun: _sessionController.runProgram,
-                onStop: _sessionController.stopProgram,
-                onRestart: _sessionController.restartProgram,
-                onDebug: _sessionController.debugProgram,
+                onNewFile: sessionController.createNewFile,
+                onOpenFile: sessionController.openFile,
+                onSaveFile: sessionController.saveFile,
+                onRun: sessionController.runProgram,
+                onStop: sessionController.stopProgram,
+                onRestart: sessionController.restartProgram,
+                onDebug: sessionController.debugProgram,
               ),
               const SizedBox(height: 12),
               Expanded(
@@ -53,19 +43,19 @@ class _ProModePageState extends State<ProModePage> {
                         children: [
                           Expanded(
                             child: _ArabicCodeEditor(
-                              controller: _sessionController.editorController,
-                              fileLabel: _sessionController.fileLabel,
+                              controller: sessionController.editorController,
+                              fileLabel: sessionController.fileLabel,
                               hasUnsavedChanges:
-                                  _sessionController.hasUnsavedChanges,
+                                  sessionController.hasUnsavedChanges,
                             ),
                           ),
                           const SizedBox(height: 12),
                           SizedBox(
                             height: 190,
                             child: _OutputPanel(
-                              statusMessage: _sessionController.statusMessage,
-                              logs: _sessionController.logs,
-                              onClearLogs: _sessionController.clearLogs,
+                              statusMessage: sessionController.statusMessage,
+                              logs: sessionController.logs,
+                              onClearLogs: sessionController.clearLogs,
                             ),
                           ),
                         ],

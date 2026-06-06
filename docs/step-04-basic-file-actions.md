@@ -28,7 +28,7 @@ Current behavior:
 
 Accepted file extensions:
 
-- `.arab`
+- `.arabic`
 - `.ino`
 - `.txt`
 
@@ -46,7 +46,7 @@ Current behavior:
 
 - If the file already has a path, save writes back to the same path.
 - If the file is unnamed, a native Windows save dialog is shown.
-- The suggested file name is `برنامج_عربي.arab`.
+- The suggested file name is `برنامج_عربي.arabic`.
 - Save state returns to `محفوظ`.
 
 ## Editor Header

@@ -9,7 +9,9 @@ import 'domain/raw_diagnostic.dart';
 import 'domain/token_info.dart';
 
 class DeveloperModePage extends StatefulWidget {
-  const DeveloperModePage({super.key});
+  const DeveloperModePage({super.key, required this.sourceProvider});
+
+  final String Function() sourceProvider;
 
   @override
   State<DeveloperModePage> createState() => _DeveloperModePageState();
@@ -45,9 +47,22 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'وضع المطور',
-                      style: Theme.of(context).textTheme.headlineSmall,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'وضع المطور',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                        ),
+                        FilledButton.icon(
+                          onPressed: () {
+                            _controller.analyze(widget.sourceProvider());
+                          },
+                          icon: const Icon(Icons.analytics_outlined),
+                          label: const Text('تحليل الكود'),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     Text(_controller.statusMessage),

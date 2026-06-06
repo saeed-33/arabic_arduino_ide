@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../features/developer_mode/developer_mode_page.dart';
 import '../features/help/help_page.dart';
 import '../features/kids_mode/kids_mode_page.dart';
+import '../features/pro_mode/application/pro_mode_session_controller.dart';
 import '../features/pro_mode/pro_mode_page.dart';
 import '../features/settings/settings_page.dart';
 
@@ -17,6 +18,19 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   AppSection _section = AppSection.proMode;
+  late final ProModeSessionController _proModeSessionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _proModeSessionController = ProModeSessionController();
+  }
+
+  @override
+  void dispose() {
+    _proModeSessionController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,9 +88,11 @@ class _HomeShellState extends State<HomeShell> {
 
   Widget _buildSection() {
     return switch (_section) {
-      AppSection.proMode => const ProModePage(),
+      AppSection.proMode => ProModePage(controller: _proModeSessionController),
       AppSection.kidsMode => const KidsModePage(),
-      AppSection.developerMode => const DeveloperModePage(),
+      AppSection.developerMode => DeveloperModePage(
+        sourceProvider: () => _proModeSessionController.editorController.text,
+      ),
       AppSection.help => const HelpPage(),
       AppSection.settings => const SettingsPage(),
     };

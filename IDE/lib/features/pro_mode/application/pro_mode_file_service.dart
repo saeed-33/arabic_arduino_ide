@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 class ProModeFileService {
   static const _arabicArduinoFileType = XTypeGroup(
     label: 'Arabic Arduino files',
-    extensions: ['arab', 'ino', 'txt'],
+    extensions: ['arabic', 'ino', 'txt'],
   );
 
   Future<OpenedFile?> openCodeFile() async {
@@ -46,7 +46,7 @@ class ProModeFileService {
   Future<String?> _pickSavePath() async {
     final saveLocation = await getSaveLocation(
       acceptedTypeGroups: [_arabicArduinoFileType],
-      suggestedName: 'برنامج_عربي.arab',
+      suggestedName: 'برنامج_عربي.arabic',
     );
 
     return saveLocation?.path;

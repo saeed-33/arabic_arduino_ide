@@ -58,7 +58,7 @@ Current Step 3 editor baseline:
 Current Step 4 file baseline:
 
 - New file clears the editor and starts an unnamed buffer.
-- Open loads local `.arab`, `.ino`, or `.txt` files.
+- Open loads local `.arabic`, `.ino`, or `.txt` files.
 - Save writes the current editor content to the selected local file.
 - Existing opened/saved files save back to the same path.
 - Editor header shows the current file name and save state.
@@ -114,6 +114,13 @@ Current compiler import baseline:
 - Developer Mode diagnostics should come from compiler output, not duplicated IDE parsing logic.
 - Current compiler output includes tokens, parse tree, raw diagnostics, build stages, and internal logs.
 - AST and generated Arduino/C++ code are shown as unavailable until the compiler emits them.
+
+Current Step 12 source analysis baseline:
+
+- Arabic language files use the `.arabic` extension.
+- Developer Mode can analyze the current Pro Mode editor source.
+- `تحليل الكود` runs the compiler diagnostics adapter against the current editor text.
+- Developer Mode continues to display compiler output only, without duplicating compiler logic in the IDE.
 
 ### Kids Mode
 
