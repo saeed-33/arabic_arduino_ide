@@ -111,6 +111,15 @@ Current compiler output:
 - build stages
 - internal logs
 
+Runtime readiness checks:
+
+- Python executable availability.
+- Local `.venv` existence.
+- `antlr4` Python runtime import.
+- `llvmlite` Python import.
+
+Compiler process output must be decoded as UTF-8. Without explicit UTF-8 decoding, Arabic text from Python stdout can appear as mojibake in Developer Mode.
+
 Current compiler gaps:
 
 - AST output is not emitted by the provided compiler snapshot yet.

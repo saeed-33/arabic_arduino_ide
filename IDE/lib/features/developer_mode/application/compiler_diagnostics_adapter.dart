@@ -4,6 +4,7 @@ import 'dart:io';
 import '../domain/ast_node_info.dart';
 import '../domain/build_stage_info.dart';
 import '../domain/compiler_diagnostics_snapshot.dart';
+import '../domain/compiler_runtime_status.dart';
 import '../domain/parse_tree_node_info.dart';
 import '../domain/raw_diagnostic.dart';
 import '../domain/token_info.dart';
@@ -14,6 +15,7 @@ abstract class CompilerDiagnosticsAdapter {
   String get runtimeNote;
 
   Future<CompilerDiagnosticsSnapshot> analyze(String source);
+  Future<CompilerRuntimeStatus> checkRuntime();
 }
 
 class ArduinoArabicCompilerDiagnosticsAdapter
@@ -41,6 +43,18 @@ class ArduinoArabicCompilerDiagnosticsAdapter
       );
     }
 
+    final runtimeStatus = await checkRuntime();
+    if (!runtimeStatus.pythonAvailable ||
+        !runtimeStatus.antlrRuntimeAvailable ||
+        !runtimeStatus.llvmliteAvailable) {
+      return _failureSnapshot(
+        code: 'COMPILER_RUNTIME_NOT_READY',
+        message:
+            'Compiler runtime is not ready. Run: ${runtimeStatus.setupCommand}',
+        context: compilerSourcePath,
+      );
+    }
+
     final runner = File('${compilerDirectory.path}\\run_diagnostics.py');
     if (!runner.existsSync()) {
       return _failureSnapshot(
@@ -61,6 +75,8 @@ class ArduinoArabicCompilerDiagnosticsAdapter
         arguments,
         workingDirectory: compilerDirectory.path,
         environment: {'PYTHONIOENCODING': 'utf-8'},
+        stdoutEncoding: utf8,
+        stderrEncoding: utf8,
       );
 
       final stdoutText = result.stdout.toString();
@@ -82,6 +98,39 @@ class ArduinoArabicCompilerDiagnosticsAdapter
         context: compilerDirectory.path,
       );
     }
+  }
+
+  @override
+  Future<CompilerRuntimeStatus> checkRuntime() async {
+    final compilerDirectory = _findCompilerDirectory();
+    final pythonExecutable = compilerDirectory == null
+        ? 'python'
+        : _pythonExecutableFor(compilerDirectory);
+    final pythonAvailable = await _canRunPython(pythonExecutable);
+    final antlrRuntimeAvailable = await _canImport(
+      pythonExecutable,
+      compilerDirectory,
+      'antlr4',
+    );
+    final llvmliteAvailable = await _canImport(
+      pythonExecutable,
+      compilerDirectory,
+      'llvmlite',
+    );
+
+    return CompilerRuntimeStatus(
+      compilerDirectoryFound: compilerDirectory != null,
+      pythonAvailable: pythonAvailable,
+      virtualEnvironmentFound:
+          compilerDirectory != null &&
+          File(
+            '${compilerDirectory.path}\\.venv\\Scripts\\python.exe',
+          ).existsSync(),
+      antlrRuntimeAvailable: antlrRuntimeAvailable,
+      llvmliteAvailable: llvmliteAvailable,
+      pythonExecutable: pythonExecutable,
+      setupCommand: 'cd compiler/ArduinoArabicCompiler; .\\setup.ps1',
+    );
   }
 
   Directory? _findCompilerDirectory() {
@@ -110,6 +159,39 @@ class ArduinoArabicCompilerDiagnosticsAdapter
     }
 
     return 'python';
+  }
+
+  Future<bool> _canRunPython(String pythonExecutable) async {
+    try {
+      final result = await Process.run(
+        pythonExecutable,
+        ['--version'],
+        stdoutEncoding: utf8,
+        stderrEncoding: utf8,
+      );
+      return result.exitCode == 0;
+    } on Object {
+      return false;
+    }
+  }
+
+  Future<bool> _canImport(
+    String pythonExecutable,
+    Directory? compilerDirectory,
+    String package,
+  ) async {
+    try {
+      final result = await Process.run(
+        pythonExecutable,
+        ['-c', 'import $package'],
+        workingDirectory: compilerDirectory?.path,
+        stdoutEncoding: utf8,
+        stderrEncoding: utf8,
+      );
+      return result.exitCode == 0;
+    } on Object {
+      return false;
+    }
   }
 
   CompilerDiagnosticsSnapshot _snapshotFromJson(Map<String, dynamic> json) {

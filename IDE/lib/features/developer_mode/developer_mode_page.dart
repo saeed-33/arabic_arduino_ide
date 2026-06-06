@@ -4,6 +4,7 @@ import '../settings/domain/ide_settings.dart';
 import 'application/developer_diagnostics_controller.dart';
 import 'domain/ast_node_info.dart';
 import 'domain/build_stage_info.dart';
+import 'domain/compiler_runtime_status.dart';
 import 'domain/parse_tree_node_info.dart';
 import 'domain/raw_diagnostic.dart';
 import 'domain/token_info.dart';
@@ -101,6 +102,7 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
                       compilerName: _controller.compilerName,
                       compilerSourcePath: _controller.compilerSourcePath,
                       runtimeNote: _controller.runtimeNote,
+                      runtimeStatus: _controller.runtimeStatus,
                     ),
                   ],
                 ),
@@ -375,12 +377,14 @@ class _EnvironmentPanel extends StatelessWidget {
     required this.compilerName,
     required this.compilerSourcePath,
     required this.runtimeNote,
+    required this.runtimeStatus,
   });
 
   final IdeSettings settings;
   final String compilerName;
   final String compilerSourcePath;
   final String runtimeNote;
+  final CompilerRuntimeStatus? runtimeStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -399,6 +403,20 @@ class _EnvironmentPanel extends StatelessWidget {
       'Compiler name': compilerName,
       'Compiler source': compilerSourcePath,
       'Compiler runtime': runtimeNote,
+      'Runtime ready': runtimeStatus?.isReady == true ? 'جاهز' : 'غير جاهز',
+      'Python': runtimeStatus?.pythonAvailable == true ? 'موجود' : 'غير موجود',
+      'Virtual env': runtimeStatus?.virtualEnvironmentFound == true
+          ? 'موجود'
+          : 'غير موجود',
+      'ANTLR runtime': runtimeStatus?.antlrRuntimeAvailable == true
+          ? 'موجود'
+          : 'غير موجود',
+      'llvmlite': runtimeStatus?.llvmliteAvailable == true
+          ? 'موجود'
+          : 'غير موجود',
+      'Setup command':
+          runtimeStatus?.setupCommand ??
+          'cd compiler/ArduinoArabicCompiler; .\\setup.ps1',
       'Parser': 'غير متصل',
     };
 

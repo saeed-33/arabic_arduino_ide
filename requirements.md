@@ -122,6 +122,14 @@ Current Step 12 source analysis baseline:
 - `تحليل الكود` runs the compiler diagnostics adapter against the current editor text.
 - Developer Mode continues to display compiler output only, without duplicating compiler logic in the IDE.
 
+Current Step 13 compiler readiness baseline:
+
+- Compiler process output is decoded as UTF-8 to preserve Arabic text.
+- Developer Mode checks compiler runtime readiness.
+- Runtime checks include Python, `.venv`, `antlr4`, and `llvmlite`.
+- Developer Mode Environment tab shows setup command when runtime is not ready.
+- The IDE does not run setup automatically.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.

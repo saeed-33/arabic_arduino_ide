@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../domain/ast_node_info.dart';
 import '../domain/build_stage_info.dart';
 import '../domain/compiler_diagnostics_snapshot.dart';
+import '../domain/compiler_runtime_status.dart';
 import '../domain/parse_tree_node_info.dart';
 import '../domain/raw_diagnostic.dart';
 import '../domain/token_info.dart';
@@ -18,6 +19,7 @@ class DeveloperDiagnosticsController extends ChangeNotifier {
 
   final CompilerDiagnosticsAdapter _compilerAdapter;
   late CompilerDiagnosticsSnapshot _snapshot;
+  CompilerRuntimeStatus? _runtimeStatus;
 
   String get compilerName => _compilerAdapter.compilerName;
   String get compilerSourcePath => _compilerAdapter.compilerSourcePath;
@@ -30,9 +32,11 @@ class DeveloperDiagnosticsController extends ChangeNotifier {
   List<String> get generatedCodeLines => _snapshot.generatedCodeLines;
   List<BuildStageInfo> get buildStages => _snapshot.buildStages;
   List<String> get internalLogs => _snapshot.internalLogs;
+  CompilerRuntimeStatus? get runtimeStatus => _runtimeStatus;
 
   Future<void> analyze(String source) async {
     _snapshot = await _compilerAdapter.analyze(source);
+    _runtimeStatus = await _compilerAdapter.checkRuntime();
     notifyListeners();
   }
 
