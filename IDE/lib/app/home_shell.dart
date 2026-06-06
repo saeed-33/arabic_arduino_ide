@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../features/developer_mode/developer_mode_page.dart';
 import '../features/help/help_page.dart';
 import '../features/kids_mode/kids_mode_page.dart';
 import '../features/pro_mode/pro_mode_page.dart';
 import '../features/settings/settings_page.dart';
 
-enum AppSection { proMode, kidsMode, help, settings }
+enum AppSection { proMode, kidsMode, developerMode, help, settings }
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -51,6 +52,10 @@ class _HomeShellState extends State<HomeShell> {
                 label: Text('التعلم'),
               ),
               NavigationRailDestination(
+                icon: Icon(Icons.developer_mode),
+                label: Text('المطور'),
+              ),
+              NavigationRailDestination(
                 icon: Icon(Icons.help_outline),
                 label: Text('مساعدة'),
               ),
@@ -71,6 +76,7 @@ class _HomeShellState extends State<HomeShell> {
     return switch (_section) {
       AppSection.proMode => const ProModePage(),
       AppSection.kidsMode => const KidsModePage(),
+      AppSection.developerMode => const DeveloperModePage(),
       AppSection.help => const HelpPage(),
       AppSection.settings => const SettingsPage(),
     };

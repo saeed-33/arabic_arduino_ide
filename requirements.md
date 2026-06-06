@@ -92,6 +92,13 @@ Current Step 7 settings baseline:
 - Settings UI exposes Arabic fields for the current configuration placeholders.
 - No persistence, validation, device detection, toolchain install, or server connection yet.
 
+Current Step 8 developer mode baseline:
+
+- Developer Mode shell exists as a separate feature.
+- Navigation includes `المطور`.
+- Developer Mode contains placeholder tabs for AST, tokens, raw errors, friendly errors, generated code, build pipeline, internal logs, and environment.
+- No real lexer, parser, semantic analyzer, code generator, compiler, or device integration yet.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.

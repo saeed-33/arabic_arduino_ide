@@ -86,6 +86,12 @@ Feature code should stay separated by responsibility:
 
 Avoid large "god classes" that mix UI layout, platform calls, parsing, compiler behavior, logging, and device control.
 
+Developer diagnostics should remain isolated from learner-facing modes:
+
+- Developer Mode can show raw compiler/parser details.
+- Pro Mode should eventually show learner-appropriate messages by default.
+- Kids Mode should avoid raw diagnostics unless explicitly requested by a mentor/developer workflow.
+
 ## Current Feature State Storage
 
 Settings are in-memory only in Step 7.
