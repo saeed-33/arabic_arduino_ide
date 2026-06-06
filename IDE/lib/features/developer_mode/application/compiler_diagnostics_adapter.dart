@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import '../domain/ast_node_info.dart';
 import '../domain/build_stage_info.dart';
 import '../domain/compiler_diagnostics_snapshot.dart';
@@ -13,8 +16,9 @@ abstract class CompilerDiagnosticsAdapter {
   Future<CompilerDiagnosticsSnapshot> analyze(String source);
 }
 
-class MockCompilerDiagnosticsAdapter implements CompilerDiagnosticsAdapter {
-  const MockCompilerDiagnosticsAdapter();
+class ArduinoArabicCompilerDiagnosticsAdapter
+    implements CompilerDiagnosticsAdapter {
+  const ArduinoArabicCompilerDiagnosticsAdapter();
 
   @override
   String get compilerName => 'ArduinoArabicCompiler';
@@ -24,102 +28,259 @@ class MockCompilerDiagnosticsAdapter implements CompilerDiagnosticsAdapter {
 
   @override
   String get runtimeNote =>
-      'ANTLR/Python compiler source imported; runtime bridge is not connected yet.';
+      'يشغّل Developer Mode سكربت Python الخاص بالمترجم ويقرأ JSON diagnostics.';
 
   @override
   Future<CompilerDiagnosticsSnapshot> analyze(String source) async {
-    return const CompilerDiagnosticsSnapshot(
-      statusMessage:
-          'تم استيراد مصدر المترجم. بيانات التشخيص ما زالت مؤقتة حتى بناء جسر التشغيل.',
-      parseTreeRoot: ParseTreeNodeInfo(
-        rule: 'program',
-        text: 'ابدأ ... نهاية',
+    final compilerDirectory = _findCompilerDirectory();
+    if (compilerDirectory == null) {
+      return _failureSnapshot(
+        code: 'COMPILER_SOURCE_NOT_FOUND',
+        message: 'Compiler source folder was not found.',
+        context: compilerSourcePath,
+      );
+    }
+
+    final runner = File('${compilerDirectory.path}\\run_diagnostics.py');
+    if (!runner.existsSync()) {
+      return _failureSnapshot(
+        code: 'COMPILER_RUNNER_NOT_FOUND',
+        message: 'run_diagnostics.py was not found.',
+        context: runner.path,
+      );
+    }
+
+    final pythonExecutable = _pythonExecutableFor(compilerDirectory);
+    final arguments = source.trim().isEmpty
+        ? ['run_diagnostics.py', '--file', 'test.txt']
+        : ['run_diagnostics.py', '--source', source];
+
+    try {
+      final result = await Process.run(
+        pythonExecutable,
+        arguments,
+        workingDirectory: compilerDirectory.path,
+        environment: {'PYTHONIOENCODING': 'utf-8'},
+      );
+
+      final stdoutText = result.stdout.toString();
+      if (stdoutText.trim().isEmpty) {
+        return _failureSnapshot(
+          code: 'COMPILER_NO_OUTPUT',
+          message: result.stderr.toString().trim().isEmpty
+              ? 'Compiler runner produced no JSON output.'
+              : result.stderr.toString().trim(),
+          context: compilerDirectory.path,
+        );
+      }
+
+      return _snapshotFromJson(jsonDecode(stdoutText) as Map<String, dynamic>);
+    } on Object catch (error) {
+      return _failureSnapshot(
+        code: 'COMPILER_PROCESS_FAILED',
+        message: error.toString(),
+        context: compilerDirectory.path,
+      );
+    }
+  }
+
+  Directory? _findCompilerDirectory() {
+    final candidates = <Directory>[
+      Directory(compilerSourcePath),
+      Directory('..\\$compilerSourcePath'),
+      Directory('${Directory.current.path}\\$compilerSourcePath'),
+      Directory('${Directory.current.parent.path}\\$compilerSourcePath'),
+    ];
+
+    for (final candidate in candidates) {
+      if (File('${candidate.path}\\run_diagnostics.py').existsSync()) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  String _pythonExecutableFor(Directory compilerDirectory) {
+    final venvPython = File(
+      '${compilerDirectory.path}\\.venv\\Scripts\\python.exe',
+    );
+    if (venvPython.existsSync()) {
+      return venvPython.path;
+    }
+
+    return 'python';
+  }
+
+  CompilerDiagnosticsSnapshot _snapshotFromJson(Map<String, dynamic> json) {
+    final diagnostics = _diagnosticsFromJson(json['rawDiagnostics']);
+    final parseTree = _parseTreeFromJson(json['parseTree']);
+    final tokens = _tokensFromJson(json['tokens']);
+    final generatedCode = _stringListFromJson(json['generatedCode']);
+    final buildStages = _buildStagesFromJson(json['buildStages']);
+    final internalLogs = _stringListFromJson(json['internalLogs']);
+
+    return CompilerDiagnosticsSnapshot(
+      statusMessage: diagnostics.isEmpty
+          ? 'تم تحليل المثال باستخدام المترجم المدمج.'
+          : 'أعاد المترجم ${diagnostics.length} رسالة تشخيصية.',
+      parseTreeRoot: parseTree,
+      astRoot: const AstNodeInfo(
+        type: 'CompilerOutputMissing',
+        value: 'المترجم الحالي لا يصدر AST بعد.',
         line: 1,
         column: 1,
-        children: [
-          ParseTreeNodeInfo(
-            rule: 'setup_block',
-            text: 'ابدأ اجعل المنفذ 13 مخرج',
-            line: 1,
-            column: 1,
-            children: [
-              ParseTreeNodeInfo(
-                rule: 'START_KEYWORD',
-                text: 'ابدأ',
-                line: 1,
-                column: 1,
-              ),
-              ParseTreeNodeInfo(
-                rule: 'pin_mode_statement',
-                text: 'اجعل المنفذ 13 مخرج',
-                line: 2,
-                column: 3,
-              ),
-            ],
-          ),
-          ParseTreeNodeInfo(
-            rule: 'loop_block',
-            text: 'كرر دائما ...',
-            line: 4,
-            column: 1,
-          ),
-        ],
       ),
-      astRoot: AstNodeInfo(
-        type: 'Program',
-        value: 'برنامج',
+      tokens: tokens,
+      rawDiagnostics: diagnostics,
+      generatedCodeLines: generatedCode.isEmpty
+          ? const ['// المترجم الحالي لا يصدر كود Arduino/C++ بعد.']
+          : generatedCode,
+      buildStages: buildStages,
+      internalLogs: internalLogs,
+    );
+  }
+
+  List<TokenInfo> _tokensFromJson(Object? value) {
+    return _jsonList(value)
+        .map(
+          (item) => TokenInfo(
+            type: _stringValue(item['type']),
+            lexeme: _stringValue(item['lexeme']),
+            line: _intValue(item['line']),
+            column: _intValue(item['column']),
+          ),
+        )
+        .toList();
+  }
+
+  ParseTreeNodeInfo _parseTreeFromJson(Object? value) {
+    if (value is! Map<String, dynamic>) {
+      return const ParseTreeNodeInfo(
+        rule: 'empty',
+        text: '',
         line: 1,
         column: 1,
-        children: [
-          AstNodeInfo(type: 'SetupBlock', value: 'ابدأ', line: 1, column: 1),
-          AstNodeInfo(
-            type: 'LoopBlock',
-            value: 'كرر دائما',
-            line: 4,
-            column: 1,
+      );
+    }
+
+    return ParseTreeNodeInfo(
+      rule: _stringValue(value['rule']),
+      text: _stringValue(value['text']),
+      line: _intValue(value['line']),
+      column: _intValue(value['column']),
+      children: _jsonList(
+        value['children'],
+      ).map((child) => _parseTreeFromJson(child)).toList(),
+    );
+  }
+
+  List<RawDiagnostic> _diagnosticsFromJson(Object? value) {
+    return _jsonList(value)
+        .map(
+          (item) => RawDiagnostic(
+            code: _stringValue(item['code']),
+            message: _stringValue(item['message']),
+            severity: _severityFromString(_stringValue(item['severity'])),
+            line: _intValue(item['line']),
+            column: _intValue(item['column']),
+            context: _stringValue(item['context']),
           ),
-        ],
+        )
+        .toList();
+  }
+
+  List<BuildStageInfo> _buildStagesFromJson(Object? value) {
+    return _jsonList(value)
+        .map(
+          (item) => BuildStageInfo(
+            name: _stringValue(item['name']),
+            status: _stageStatusFromString(_stringValue(item['status'])),
+            durationLabel: _stringValue(item['durationLabel']),
+            details: _stringValue(item['details']),
+          ),
+        )
+        .toList();
+  }
+
+  List<String> _stringListFromJson(Object? value) {
+    return _jsonList(value).map((item) => item.toString()).toList();
+  }
+
+  CompilerDiagnosticsSnapshot _failureSnapshot({
+    required String code,
+    required String message,
+    required String context,
+  }) {
+    return CompilerDiagnosticsSnapshot(
+      statusMessage: 'تعذر تشغيل المترجم المدمج.',
+      parseTreeRoot: const ParseTreeNodeInfo(
+        rule: 'compiler_error',
+        text: '',
+        line: 1,
+        column: 1,
       ),
-      tokens: [
-        TokenInfo(type: 'KeywordStart', lexeme: 'ابدأ', line: 1, column: 1),
-        TokenInfo(type: 'KeywordMake', lexeme: 'اجعل', line: 2, column: 3),
-        TokenInfo(type: 'Identifier', lexeme: 'المنفذ', line: 2, column: 8),
-        TokenInfo(type: 'Number', lexeme: '13', line: 2, column: 15),
-      ],
+      astRoot: const AstNodeInfo(
+        type: 'CompilerError',
+        value: '',
+        line: 1,
+        column: 1,
+      ),
+      tokens: const [],
       rawDiagnostics: [
         RawDiagnostic(
-          code: 'COMPILER_BRIDGE_NOT_CONNECTED',
-          message:
-              'Compiler source is available, but the Flutter runtime bridge is not implemented yet.',
-          severity: DiagnosticSeverity.info,
+          code: code,
+          message: message,
+          severity: DiagnosticSeverity.error,
           line: 1,
           column: 1,
-          context: 'compiler/ArduinoArabicCompiler',
+          context: context,
         ),
       ],
-      generatedCodeLines: [
-        '// Compiler adapter placeholder',
-        '// Real generated Arduino/C++ will come from ArduinoArabicCompiler.',
-      ],
-      buildStages: [
+      generatedCodeLines: const [],
+      buildStages: const [
         BuildStageInfo(
-          name: 'Compiler source import',
-          status: BuildStageStatus.ready,
-          durationLabel: '--',
-          details: 'تم استيراد ملفات ANTLR و requirements.txt.',
-        ),
-        BuildStageInfo(
-          name: 'Runtime bridge',
+          name: 'Compiler runtime',
           status: BuildStageStatus.blocked,
           durationLabel: '--',
-          details: 'لم يتم ربط Python/ANTLR مع تطبيق Flutter بعد.',
+          details: 'تعذر تشغيل مترجم ArduinoArabicCompiler.',
         ),
       ],
-      internalLogs: [
-        '[dev] Compiler source path: compiler/ArduinoArabicCompiler',
-        '[dev] Adapter: MockCompilerDiagnosticsAdapter',
-        '[dev] Runtime bridge pending.',
-      ],
+      internalLogs: [message],
     );
+  }
+
+  List<Map<String, dynamic>> _jsonList(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+
+    return value.whereType<Map<String, dynamic>>().toList();
+  }
+
+  String _stringValue(Object? value) => value?.toString() ?? '';
+
+  int _intValue(Object? value) {
+    if (value is int) {
+      return value;
+    }
+
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  DiagnosticSeverity _severityFromString(String value) {
+    return switch (value.toLowerCase()) {
+      'warning' => DiagnosticSeverity.warning,
+      'error' => DiagnosticSeverity.error,
+      _ => DiagnosticSeverity.info,
+    };
+  }
+
+  BuildStageStatus _stageStatusFromString(String value) {
+    return switch (value.toLowerCase()) {
+      'ready' => BuildStageStatus.ready,
+      'blocked' => BuildStageStatus.blocked,
+      _ => BuildStageStatus.waiting,
+    };
   }
 }

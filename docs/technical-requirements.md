@@ -83,7 +83,33 @@ Compiler Python requirements from `compiler/ArduinoArabicCompiler/requirements.t
 | `antlr4-python3-runtime` | `4.13.2` |
 | `llvmlite` | `0.47.0` |
 
-The Flutter app does not execute the compiler yet. Developer Mode currently uses a Dart adapter contract with mock diagnostics.
+Developer Mode executes the compiler diagnostics runner through a Dart adapter contract.
+
+Runner:
+
+```text
+compiler/ArduinoArabicCompiler/run_diagnostics.py
+```
+
+Local setup:
+
+```powershell
+cd compiler/ArduinoArabicCompiler
+.\setup.ps1
+```
+
+Current compiler output:
+
+- tokens
+- parse tree
+- raw syntax diagnostics
+- build stages
+- internal logs
+
+Current compiler gaps:
+
+- AST output is not emitted by the provided compiler snapshot yet.
+- Arduino/C++ generated code is not emitted by the provided compiler snapshot yet.
 
 ## Native Plugin Rule
 
@@ -122,11 +148,11 @@ Developer diagnostics should remain isolated from learner-facing modes:
 - Pro Mode should eventually show learner-appropriate messages by default.
 - Kids Mode should avoid raw diagnostics unless explicitly requested by a mentor/developer workflow.
 
-Compiler integration should use an adapter boundary:
+Compiler integration uses an adapter boundary:
 
 - Compiler inputs and outputs should be translated into Dart domain models.
 - Flutter widgets should not import or invoke compiler internals directly.
-- The first real integration should decide whether the compiler runs as a Python subprocess, generated Dart parser, service process, or packaged executable.
+- The current integration runs the compiler diagnostics script as a Python subprocess.
 
 ## Current Feature State Storage
 

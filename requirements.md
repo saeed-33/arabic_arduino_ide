@@ -110,8 +110,10 @@ Current compiler import baseline:
 - Provided compiler source is stored under `compiler/ArduinoArabicCompiler`.
 - Compiler source contains ANTLR lexer/parser grammar files and Python requirements.
 - Developer Mode has a `CompilerDiagnosticsAdapter` contract.
-- Current adapter returns mock diagnostics and records that the runtime bridge is not connected.
-- No compiler execution from Flutter exists yet.
+- Current adapter runs `run_diagnostics.py` and maps compiler JSON into Developer Mode.
+- Developer Mode diagnostics should come from compiler output, not duplicated IDE parsing logic.
+- Current compiler output includes tokens, parse tree, raw diagnostics, build stages, and internal logs.
+- AST and generated Arduino/C++ code are shown as unavailable until the compiler emits them.
 
 ### Kids Mode
 

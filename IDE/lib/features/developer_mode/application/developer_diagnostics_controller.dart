@@ -11,7 +11,7 @@ import 'compiler_diagnostics_adapter.dart';
 class DeveloperDiagnosticsController extends ChangeNotifier {
   DeveloperDiagnosticsController({CompilerDiagnosticsAdapter? compilerAdapter})
     : _compilerAdapter =
-          compilerAdapter ?? const MockCompilerDiagnosticsAdapter() {
+          compilerAdapter ?? const ArduinoArabicCompilerDiagnosticsAdapter() {
     _snapshot = _emptySnapshot();
     analyze('');
   }
