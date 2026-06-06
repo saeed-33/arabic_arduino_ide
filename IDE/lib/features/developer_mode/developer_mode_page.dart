@@ -67,6 +67,15 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
                     ),
                     const SizedBox(height: 6),
                     Text(_controller.statusMessage),
+                    const SizedBox(height: 12),
+                    _DiagnosticsSummary(
+                      tokenCount: _controller.tokens.length,
+                      diagnosticCount: _controller.rawDiagnostics.length,
+                      runtimeReady: _controller.runtimeStatus?.isReady == true,
+                      parseTreeNodeCount: _countParseTreeNodes(
+                        _controller.parseTreeRoot,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -113,18 +122,148 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
       },
     );
   }
+
+  int _countParseTreeNodes(ParseTreeNodeInfo node) {
+    return 1 +
+        node.children.fold<int>(
+          0,
+          (total, child) => total + _countParseTreeNodes(child),
+        );
+  }
 }
 
-class _ParseTreePanel extends StatelessWidget {
+class _DiagnosticsSummary extends StatelessWidget {
+  const _DiagnosticsSummary({
+    required this.tokenCount,
+    required this.diagnosticCount,
+    required this.runtimeReady,
+    required this.parseTreeNodeCount,
+  });
+
+  final int tokenCount;
+  final int diagnosticCount;
+  final bool runtimeReady;
+  final int parseTreeNodeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _SummaryChip(
+          icon: Icons.view_list_outlined,
+          label: 'Tokens',
+          value: '$tokenCount',
+        ),
+        _SummaryChip(
+          icon: Icons.account_tree_outlined,
+          label: 'Parse nodes',
+          value: '$parseTreeNodeCount',
+        ),
+        _SummaryChip(
+          icon: Icons.error_outline,
+          label: 'Diagnostics',
+          value: '$diagnosticCount',
+        ),
+        _SummaryChip(
+          icon: runtimeReady ? Icons.check_circle_outline : Icons.block,
+          label: 'Runtime',
+          value: runtimeReady ? 'جاهز' : 'غير جاهز',
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Icon(icon, size: 18),
+      label: Text('$label: $value'),
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _ParseTreePanel extends StatefulWidget {
   const _ParseTreePanel({required this.root});
 
   final ParseTreeNodeInfo root;
 
   @override
+  State<_ParseTreePanel> createState() => _ParseTreePanelState();
+}
+
+class _ParseTreePanelState extends State<_ParseTreePanel> {
+  String _filter = '';
+
+  @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [_ParseTreeNodeTile(node: root)],
+    final visibleRoot = _filter.trim().isEmpty
+        ? widget.root
+        : _filterParseTree(widget.root, _filter.trim());
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            onChanged: (value) {
+              setState(() {
+                _filter = value;
+              });
+            },
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search),
+              labelText: 'بحث في Parse Tree',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        Expanded(
+          child: visibleRoot == null
+              ? const Center(child: Text('لا توجد عقد مطابقة.'))
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  children: [_ParseTreeNodeTile(node: visibleRoot)],
+                ),
+        ),
+      ],
+    );
+  }
+
+  ParseTreeNodeInfo? _filterParseTree(ParseTreeNodeInfo node, String filter) {
+    final normalizedFilter = filter.toLowerCase();
+    final selfMatches =
+        node.rule.toLowerCase().contains(normalizedFilter) ||
+        node.text.toLowerCase().contains(normalizedFilter);
+    final matchingChildren = node.children
+        .map((child) => _filterParseTree(child, filter))
+        .whereType<ParseTreeNodeInfo>()
+        .toList();
+
+    if (!selfMatches && matchingChildren.isEmpty) {
+      return null;
+    }
+
+    return ParseTreeNodeInfo(
+      rule: node.rule,
+      text: node.text,
+      line: node.line,
+      column: node.column,
+      children: selfMatches ? node.children : matchingChildren,
     );
   }
 }
@@ -136,26 +275,36 @@ class _ParseTreeNodeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = '${node.rule}: ${node.text}';
+    final title = '${node.rule}: ${_compactText(node.text)}';
     final subtitle = 'line ${node.line}, column ${node.column}';
 
     if (node.children.isEmpty) {
       return ListTile(
         dense: true,
         leading: const Icon(Icons.schema_outlined),
-        title: Text(title),
+        title: Text(title, overflow: TextOverflow.ellipsis),
         subtitle: Text(subtitle),
       );
     }
 
     return ExpansionTile(
       leading: const Icon(Icons.schema_outlined),
-      title: Text(title),
+      title: Text(title, overflow: TextOverflow.ellipsis),
       subtitle: Text(subtitle),
       children: node.children
           .map((child) => _ParseTreeNodeTile(node: child))
           .toList(),
     );
+  }
+
+  String _compactText(String value) {
+    const maxLength = 80;
+    final compact = value.replaceAll(RegExp(r'\s+'), ' ');
+    if (compact.length <= maxLength) {
+      return compact;
+    }
+
+    return '${compact.substring(0, maxLength)}...';
   }
 }
 
@@ -248,7 +397,10 @@ class _RawErrorsPanel extends StatelessWidget {
         final diagnostic = diagnostics[index];
         return ListTile(
           leading: Icon(_iconForSeverity(diagnostic.severity)),
-          title: Text('${diagnostic.code}: ${diagnostic.message}'),
+          title: Text(
+            '${diagnostic.code}: ${diagnostic.message}',
+            softWrap: true,
+          ),
           subtitle: Text(
             'line ${diagnostic.line}, column ${diagnostic.column}\n${diagnostic.context}',
           ),

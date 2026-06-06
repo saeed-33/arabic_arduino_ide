@@ -262,7 +262,7 @@ class ArduinoArabicCompilerDiagnosticsAdapter
         .map(
           (item) => RawDiagnostic(
             code: _stringValue(item['code']),
-            message: _stringValue(item['message']),
+            message: _decodeUnicodeEscapes(_stringValue(item['message'])),
             severity: _severityFromString(_stringValue(item['severity'])),
             line: _intValue(item['line']),
             column: _intValue(item['column']),
@@ -341,6 +341,17 @@ class ArduinoArabicCompilerDiagnosticsAdapter
   }
 
   String _stringValue(Object? value) => value?.toString() ?? '';
+
+  String _decodeUnicodeEscapes(String value) {
+    return value.replaceAllMapped(RegExp(r'\\u([0-9a-fA-F]{4})'), (match) {
+      final codePoint = int.tryParse(match.group(1)!, radix: 16);
+      if (codePoint == null) {
+        return match.group(0)!;
+      }
+
+      return String.fromCharCode(codePoint);
+    });
+  }
 
   int _intValue(Object? value) {
     if (value is int) {

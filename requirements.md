@@ -130,6 +130,13 @@ Current Step 13 compiler readiness baseline:
 - Developer Mode Environment tab shows setup command when runtime is not ready.
 - The IDE does not run setup automatically.
 
+Current Step 14 developer diagnostics usability baseline:
+
+- Developer Mode shows summary counts for tokens, diagnostics, parse tree nodes, and runtime status.
+- Parse Tree supports search/filter.
+- Long parse tree node text is compacted in the UI.
+- Raw error messages wrap instead of stretching across the screen.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.
