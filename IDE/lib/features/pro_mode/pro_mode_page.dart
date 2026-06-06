@@ -1,16 +1,62 @@
 import 'package:flutter/material.dart';
 
-class ProModePage extends StatelessWidget {
+class ProModePage extends StatefulWidget {
   const ProModePage({super.key});
 
   @override
+  State<ProModePage> createState() => _ProModePageState();
+}
+
+class _ProModePageState extends State<ProModePage> {
+  static const _initialCode = '''
+ابدأ
+  اجعل المنفذ 13 مخرج
+
+كرر دائما
+  شغّل المنفذ 13
+  انتظر 1000
+  أطفئ المنفذ 13
+  انتظر 1000
+نهاية
+''';
+
+  late final TextEditingController _editorController;
+  bool _hasUnsavedChanges = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _editorController = TextEditingController(text: _initialCode);
+    _editorController.addListener(_handleCodeChanged);
+  }
+
+  @override
+  void dispose() {
+    _editorController
+      ..removeListener(_handleCodeChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _handleCodeChanged() {
+    final hasChanges = _editorController.text != _initialCode;
+    if (hasChanges == _hasUnsavedChanges) {
+      return;
+    }
+
+    setState(() {
+      _hasUnsavedChanges = hasChanges;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _CommandBar(),
-          SizedBox(height: 12),
+          const _CommandBar(),
+          const SizedBox(height: 12),
           Expanded(
             child: Row(
               children: [
@@ -18,14 +64,19 @@ class ProModePage extends StatelessWidget {
                   flex: 4,
                   child: Column(
                     children: [
-                      Expanded(child: _EditorPlaceholder()),
-                      SizedBox(height: 12),
-                      SizedBox(height: 170, child: _OutputPanel()),
+                      Expanded(
+                        child: _ArabicCodeEditor(
+                          controller: _editorController,
+                          hasUnsavedChanges: _hasUnsavedChanges,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const SizedBox(height: 170, child: _OutputPanel()),
                     ],
                   ),
                 ),
-                SizedBox(width: 12),
-                SizedBox(width: 260, child: _DeviceToolsPanel()),
+                const SizedBox(width: 12),
+                const SizedBox(width: 260, child: _DeviceToolsPanel()),
               ],
             ),
           ),
@@ -126,8 +177,14 @@ class _CommandButton extends StatelessWidget {
   }
 }
 
-class _EditorPlaceholder extends StatelessWidget {
-  const _EditorPlaceholder();
+class _ArabicCodeEditor extends StatelessWidget {
+  const _ArabicCodeEditor({
+    required this.controller,
+    required this.hasUnsavedChanges,
+  });
+
+  final TextEditingController controller;
+  final bool hasUnsavedChanges;
 
   @override
   Widget build(BuildContext context) {
@@ -135,22 +192,29 @@ class _EditorPlaceholder extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _PanelHeader(
+          _PanelHeader(
             icon: Icons.edit_note,
             title: 'المحرر',
-            trailing: 'ملف غير محفوظ',
+            trailing: hasUnsavedChanges ? 'تغييرات غير محفوظة' : 'محفوظ مؤقتا',
           ),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(20),
               color: Colors.white,
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Text(
-                  'اكتب هنا كود الأردوينو العربي في الخطوات القادمة...',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+              child: TextField(
+                controller: controller,
+                expands: true,
+                maxLines: null,
+                minLines: null,
+                textAlign: TextAlign.right,
+                textDirection: TextDirection.rtl,
+                keyboardType: TextInputType.multiline,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(20),
+                ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontFamily: 'Cascadia Mono',
+                  height: 1.55,
                 ),
               ),
             ),

@@ -46,6 +46,15 @@ Current Step 2 layout baseline:
 - Side devices/tools panel placeholder.
 - No real editor, terminal, compiler, debugger, or device logic yet.
 
+Current Step 3 editor baseline:
+
+- Editable Arabic code area.
+- RTL text entry.
+- Initial Arabic Arduino sample code.
+- Simple unsaved-change state when the editor text changes.
+- File buttons are still visual placeholders only.
+- No parser, compiler, terminal, debugger, save/open, or device logic yet.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.
