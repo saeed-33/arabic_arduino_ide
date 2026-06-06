@@ -66,6 +66,23 @@ Added Flutter package:
 
 This gives the Windows app native open/save dialogs.
 
+## File Dialog Runtime Fix
+
+File operations were moved behind `ProModeFileService` so the Pro Mode page does not directly own native file dialog behavior.
+
+The UI now catches unavailable file-dialog plugin errors and shows an Arabic status message instead of allowing an unhandled exception to crash the app.
+
+If `MissingPluginException` appears after adding `file_selector`, stop the running app and rebuild it. Flutter desktop native plugins are registered at app startup, so hot reload/hot restart is not enough after adding a new plugin.
+
+Use:
+
+```powershell
+cd IDE
+flutter clean
+flutter pub get
+flutter run -d windows
+```
+
 ## Still Not Implemented
 
 - Multiple file tabs.

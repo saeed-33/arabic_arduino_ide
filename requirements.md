@@ -64,6 +64,12 @@ Current Step 4 file baseline:
 - Editor header shows the current file name and save state.
 - Run, debug, terminal, compiler, and device behavior are still not implemented.
 
+Technical documentation baseline:
+
+- `docs/technical-requirements.md` tracks toolchain, libraries, versions, platform constraints, and architecture rules.
+- Native Flutter desktop plugins require a full app restart/rebuild after being added.
+- File platform behavior should live outside UI widgets to preserve separation of concerns.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.

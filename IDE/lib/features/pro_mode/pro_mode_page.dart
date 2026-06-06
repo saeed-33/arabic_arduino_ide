@@ -1,7 +1,8 @@
 import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+
+import 'application/pro_mode_file_service.dart';
 
 class ProModePage extends StatefulWidget {
   const ProModePage({super.key});
@@ -24,9 +25,11 @@ class _ProModePageState extends State<ProModePage> {
 ''';
 
   late final TextEditingController _editorController;
+  final ProModeFileService _fileService = ProModeFileService();
   bool _hasUnsavedChanges = false;
   String? _currentFilePath;
   String _lastSavedText = _initialCode;
+  String? _statusMessage;
 
   @override
   void initState() {
@@ -72,49 +75,51 @@ class _ProModePageState extends State<ProModePage> {
       _currentFilePath = null;
       _lastSavedText = '';
       _hasUnsavedChanges = false;
+      _statusMessage = 'تم إنشاء ملف جديد.';
     });
     _setEditorText('');
   }
 
   Future<void> _openFile() async {
-    const textFileType = XTypeGroup(
-      label: 'Arabic Arduino files',
-      extensions: ['arab', 'ino', 'txt'],
-    );
+    try {
+      final file = await _fileService.openCodeFile();
+      if (file == null) {
+        _showStatus('تم إلغاء فتح الملف.');
+        return;
+      }
 
-    final file = await openFile(acceptedTypeGroups: [textFileType]);
-    if (file == null) {
-      return;
+      _setEditorText(file.content);
+      _markSaved(file.path);
+      _showStatus(
+        'تم فتح الملف: ${_fileService.displayNameForPath(file.path)}',
+      );
+    } on FileDialogUnavailableException {
+      _showFileDialogUnavailableMessage();
+    } on FileSystemException catch (error) {
+      _showStatus('تعذر فتح الملف: ${error.message}');
     }
-
-    final content = await file.readAsString();
-    _setEditorText(content);
-    _markSaved(file.path);
   }
 
   Future<void> _saveFile() async {
-    final existingPath = _currentFilePath;
-    if (existingPath != null) {
-      await File(existingPath).writeAsString(_editorController.text);
-      _markSaved(existingPath);
-      return;
+    try {
+      final savedPath = await _fileService.saveCodeFile(
+        content: _editorController.text,
+        currentPath: _currentFilePath,
+      );
+      if (savedPath == null) {
+        _showStatus('تم إلغاء حفظ الملف.');
+        return;
+      }
+
+      _markSaved(savedPath);
+      _showStatus(
+        'تم حفظ الملف: ${_fileService.displayNameForPath(savedPath)}',
+      );
+    } on FileDialogUnavailableException {
+      _showFileDialogUnavailableMessage();
+    } on FileSystemException catch (error) {
+      _showStatus('تعذر حفظ الملف: ${error.message}');
     }
-
-    const textFileType = XTypeGroup(
-      label: 'Arabic Arduino files',
-      extensions: ['arab', 'ino', 'txt'],
-    );
-
-    final savePath = await getSaveLocation(
-      acceptedTypeGroups: [textFileType],
-      suggestedName: 'برنامج_عربي.arab',
-    );
-    if (savePath == null) {
-      return;
-    }
-
-    await File(savePath.path).writeAsString(_editorController.text);
-    _markSaved(savePath.path);
   }
 
   String get _fileLabel {
@@ -123,7 +128,27 @@ class _ProModePageState extends State<ProModePage> {
       return 'ملف جديد';
     }
 
-    return path.split(Platform.pathSeparator).last;
+    return _fileService.displayNameForPath(path);
+  }
+
+  void _showFileDialogUnavailableMessage() {
+    _showStatus(
+      'خدمة اختيار الملفات غير جاهزة. أوقف التطبيق ثم شغّله من جديد بعد إضافة الحزمة.',
+    );
+  }
+
+  void _showStatus(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _statusMessage = message;
+    });
+
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -153,7 +178,10 @@ class _ProModePageState extends State<ProModePage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const SizedBox(height: 170, child: _OutputPanel()),
+                      SizedBox(
+                        height: 170,
+                        child: _OutputPanel(statusMessage: _statusMessage),
+                      ),
                     ],
                   ),
                 ),
@@ -325,23 +353,27 @@ class _ArabicCodeEditor extends StatelessWidget {
 }
 
 class _OutputPanel extends StatelessWidget {
-  const _OutputPanel();
+  const _OutputPanel({required this.statusMessage});
+
+  final String? statusMessage;
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
+    return Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _PanelHeader(
+          const _PanelHeader(
             icon: Icons.terminal,
             title: 'المخرجات والسجلات',
             trailing: 'جاهز',
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('ستظهر رسائل التشغيل، الأخطاء، والسجلات هنا.'),
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                statusMessage ?? 'ستظهر رسائل التشغيل، الأخطاء، والسجلات هنا.',
+              ),
             ),
           ),
         ],
