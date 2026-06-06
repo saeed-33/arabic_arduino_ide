@@ -105,6 +105,14 @@ Compiler integration note:
 - Developer Mode should be ready to display compiler/parser outputs without coupling UI widgets directly to compiler internals.
 - Parse Tree should preserve grammar structure, while AST should represent the simplified semantic tree.
 
+Current compiler import baseline:
+
+- Provided compiler source is stored under `compiler/ArduinoArabicCompiler`.
+- Compiler source contains ANTLR lexer/parser grammar files and Python requirements.
+- Developer Mode has a `CompilerDiagnosticsAdapter` contract.
+- Current adapter returns mock diagnostics and records that the runtime bridge is not connected.
+- No compiler execution from Flutter exists yet.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.

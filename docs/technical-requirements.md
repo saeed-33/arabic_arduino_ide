@@ -55,6 +55,36 @@ flutter: >=3.38.0
 | `cross_file` | `0.3.5+2` | Cross-platform file abstraction used by file selector. |
 | `http` | `1.6.0` | Transitive dependency currently brought by file selector package graph. |
 
+## Provided Compiler Source
+
+Compiler source snapshot:
+
+```text
+compiler/ArduinoArabicCompiler/
+```
+
+Files imported from the provided archive:
+
+- `ArArduinoLexer.g4`
+- `ArArduinoParser.g4`
+- `requirements.txt`
+- `test.txt`
+- `parse tree.png`
+
+Compiler source type:
+
+- ANTLR grammar files.
+- Python runtime requirements.
+
+Compiler Python requirements from `compiler/ArduinoArabicCompiler/requirements.txt`:
+
+| Library | Version |
+| --- | --- |
+| `antlr4-python3-runtime` | `4.13.2` |
+| `llvmlite` | `0.47.0` |
+
+The Flutter app does not execute the compiler yet. Developer Mode currently uses a Dart adapter contract with mock diagnostics.
+
 ## Native Plugin Rule
 
 When adding a Flutter desktop plugin, do a full stop and rebuild of the Windows app.
@@ -91,6 +121,12 @@ Developer diagnostics should remain isolated from learner-facing modes:
 - Developer Mode can show raw compiler/parser details.
 - Pro Mode should eventually show learner-appropriate messages by default.
 - Kids Mode should avoid raw diagnostics unless explicitly requested by a mentor/developer workflow.
+
+Compiler integration should use an adapter boundary:
+
+- Compiler inputs and outputs should be translated into Dart domain models.
+- Flutter widgets should not import or invoke compiler internals directly.
+- The first real integration should decide whether the compiler runs as a Python subprocess, generated Dart parser, service process, or packaged executable.
 
 ## Current Feature State Storage
 

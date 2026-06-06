@@ -32,56 +32,68 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 9,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'وضع المطور',
-                  style: Theme.of(context).textTheme.headlineSmall,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return DefaultTabController(
+          length: 9,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'وضع المطور',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(_controller.statusMessage),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                Text(_controller.statusMessage),
-              ],
-            ),
-          ),
-          const TabBar(
-            isScrollable: true,
-            tabs: [
-              Tab(text: 'Parse Tree'),
-              Tab(text: 'AST'),
-              Tab(text: 'Tokens'),
-              Tab(text: 'Raw Errors'),
-              Tab(text: 'Friendly Errors'),
-              Tab(text: 'Generated Code'),
-              Tab(text: 'Pipeline'),
-              Tab(text: 'Internal Logs'),
-              Tab(text: 'Environment'),
+              ),
+              const TabBar(
+                isScrollable: true,
+                tabs: [
+                  Tab(text: 'Parse Tree'),
+                  Tab(text: 'AST'),
+                  Tab(text: 'Tokens'),
+                  Tab(text: 'Raw Errors'),
+                  Tab(text: 'Friendly Errors'),
+                  Tab(text: 'Generated Code'),
+                  Tab(text: 'Pipeline'),
+                  Tab(text: 'Internal Logs'),
+                  Tab(text: 'Environment'),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _ParseTreePanel(root: _controller.parseTreeRoot),
+                    _AstPanel(root: _controller.astRoot),
+                    _TokensPanel(tokens: _controller.tokens),
+                    _RawErrorsPanel(diagnostics: _controller.rawDiagnostics),
+                    _FriendlyErrorsPanel(
+                      diagnostics: _controller.rawDiagnostics,
+                    ),
+                    _GeneratedCodePanel(lines: _controller.generatedCodeLines),
+                    _PipelinePanel(stages: _controller.buildStages),
+                    _InternalLogsPanel(logs: _controller.internalLogs),
+                    _EnvironmentPanel(
+                      settings: IdeSettings.initial(),
+                      compilerName: _controller.compilerName,
+                      compilerSourcePath: _controller.compilerSourcePath,
+                      runtimeNote: _controller.runtimeNote,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-          Expanded(
-            child: TabBarView(
-              children: [
-                _ParseTreePanel(root: _controller.parseTreeRoot),
-                _AstPanel(root: _controller.astRoot),
-                _TokensPanel(tokens: _controller.tokens),
-                _RawErrorsPanel(diagnostics: _controller.rawDiagnostics),
-                _FriendlyErrorsPanel(diagnostics: _controller.rawDiagnostics),
-                _GeneratedCodePanel(lines: _controller.generatedCodeLines),
-                _PipelinePanel(stages: _controller.buildStages),
-                _InternalLogsPanel(logs: _controller.internalLogs),
-                _EnvironmentPanel(settings: IdeSettings.initial()),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -343,9 +355,17 @@ class _InternalLogsPanel extends StatelessWidget {
 }
 
 class _EnvironmentPanel extends StatelessWidget {
-  const _EnvironmentPanel({required this.settings});
+  const _EnvironmentPanel({
+    required this.settings,
+    required this.compilerName,
+    required this.compilerSourcePath,
+    required this.runtimeNote,
+  });
 
   final IdeSettings settings;
+  final String compilerName;
+  final String compilerSourcePath;
+  final String runtimeNote;
 
   @override
   Widget build(BuildContext context) {
@@ -361,6 +381,9 @@ class _EnvironmentPanel extends StatelessWidget {
           ? 'غير محدد'
           : settings.librariesServerUrl,
       'Compiler': 'غير متصل',
+      'Compiler name': compilerName,
+      'Compiler source': compilerSourcePath,
+      'Compiler runtime': runtimeNote,
       'Parser': 'غير متصل',
     };
 
