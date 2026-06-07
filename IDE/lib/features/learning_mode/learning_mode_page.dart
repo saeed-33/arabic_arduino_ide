@@ -60,10 +60,29 @@ class _LearningModePageState extends State<LearningModePage> {
                 child: Column(
                   children: [
                     Expanded(
-                      child: _WorkspacePanel(
-                        blocks: _controller.programBlocks,
-                        onAdd: _controller.addBlock,
-                        onRemove: _controller.removeBlock,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _WorkspacePanel(
+                              blocks: _controller.programBlocks,
+                              onAdd: _controller.addBlock,
+                              onRemove: _controller.removeBlock,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 280,
+                            child: _ProgramOutlinePanel(
+                              functions: _controller.functionBlocks,
+                              globals: _controller.globalBlocks,
+                              onAddUserFunction: _controller.addUserFunction,
+                              onAddGlobalVariable:
+                                  _controller.addGlobalVariable,
+                              onRestoreRequiredFunction:
+                                  _controller.addRequiredFunction,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -771,6 +790,185 @@ class _BlockDropSlot extends StatelessWidget {
   }
 }
 
+class _ProgramOutlinePanel extends StatelessWidget {
+  const _ProgramOutlinePanel({
+    required this.functions,
+    required this.globals,
+    required this.onAddUserFunction,
+    required this.onAddGlobalVariable,
+    required this.onRestoreRequiredFunction,
+  });
+
+  final List<LearningProgramBlock> functions;
+  final List<LearningProgramBlock> globals;
+  final VoidCallback onAddUserFunction;
+  final VoidCallback onAddGlobalVariable;
+  final ValueChanged<LearningBlockKind> onRestoreRequiredFunction;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSetup = functions.any(
+      (block) => block.definition.kind == LearningBlockKind.setup,
+    );
+    final hasLoop = functions.any(
+      (block) => block.definition.kind == LearningBlockKind.loop,
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'هيكل البرنامج',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 10),
+            _OutlineActionButton(
+              icon: Icons.add,
+              label: 'إضافة تابع جديد',
+              onPressed: onAddUserFunction,
+            ),
+            const SizedBox(height: 8),
+            _OutlineActionButton(
+              icon: Icons.data_object,
+              label: 'متغير عام',
+              onPressed: onAddGlobalVariable,
+            ),
+            const SizedBox(height: 12),
+            Text('التوابع', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            if (!hasSetup)
+              _OutlineActionButton(
+                icon: Icons.restart_alt,
+                label: 'إعادة initialize',
+                onPressed: () =>
+                    onRestoreRequiredFunction(LearningBlockKind.setup),
+              ),
+            if (!hasLoop)
+              Padding(
+                padding: EdgeInsets.only(top: hasSetup ? 0 : 8),
+                child: _OutlineActionButton(
+                  icon: Icons.loop,
+                  label: 'إعادة loop',
+                  onPressed: () =>
+                      onRestoreRequiredFunction(LearningBlockKind.loop),
+                ),
+              ),
+            Expanded(
+              child: ListView(
+                children: [
+                  ...functions.map(
+                    (block) => _OutlineItem(
+                      color: _colorForGroup(block.groupColor),
+                      title: block.definition.title,
+                      subtitle: '${block.children.length} بلوك داخلي',
+                      icon: _iconForBlock(block.definition.kind),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'المتغيرات العامة',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  if (globals.isEmpty)
+                    const Text('لا توجد متغيرات عامة بعد.')
+                  else
+                    ...globals.map(
+                      (block) => _OutlineItem(
+                        color: _colorForGroup(block.groupColor),
+                        title: block.definition.title,
+                        subtitle: block.definition.description,
+                        icon: Icons.data_array,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OutlineActionButton extends StatelessWidget {
+  const _OutlineActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.tonalIcon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+    );
+  }
+}
+
+class _OutlineItem extends StatelessWidget {
+  const _OutlineItem({
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  final Color color;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: _tintForGroup(color),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withAlpha(96)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              Icon(icon, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      subtitle,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _WorkspacePanel extends StatelessWidget {
   const _WorkspacePanel({
     required this.blocks,
@@ -848,6 +1046,19 @@ String _placementLabel(LearningBlockPlacement placement) {
   return switch (placement) {
     LearningBlockPlacement.topLevel => 'مستوى البرنامج',
     LearningBlockPlacement.functionBody => 'داخل دالة',
+  };
+}
+
+IconData _iconForBlock(LearningBlockKind kind) {
+  return switch (kind) {
+    LearningBlockKind.setup => Icons.restart_alt,
+    LearningBlockKind.loop => Icons.loop,
+    LearningBlockKind.userFunction => Icons.functions,
+    LearningBlockKind.variable => Icons.data_array,
+    LearningBlockKind.print => Icons.terminal,
+    LearningBlockKind.delay => Icons.timer_outlined,
+    LearningBlockKind.ifStatement => Icons.call_split,
+    LearningBlockKind.callUserFunction => Icons.keyboard_return,
   };
 }
 

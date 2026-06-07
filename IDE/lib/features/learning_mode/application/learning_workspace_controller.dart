@@ -6,6 +6,10 @@ class LearningWorkspaceController extends ChangeNotifier {
   final List<LearningProgramBlock> _programBlocks = [];
   int _nextId = 1;
 
+  LearningWorkspaceController() {
+    _resetProgram();
+  }
+
   List<LearningBlockGroup> get paletteGroups => const [
     LearningBlockGroup(
       title: 'البداية والتكرار',
@@ -13,8 +17,8 @@ class LearningWorkspaceController extends ChangeNotifier {
       blocks: [
         LearningBlockDefinition(
           kind: LearningBlockKind.setup,
-          title: 'دالة إعداد',
-          description: 'مكان أوامر البداية.',
+          title: 'initialize / إعداد',
+          description: 'تابع التهيئة الأساسي في برنامج الأردوينو.',
           generatedCode: 'دالة إعداد() : فارغ {\n}',
           placement: LearningBlockPlacement.topLevel,
           acceptsChildren: true,
@@ -102,6 +106,14 @@ class LearningWorkspaceController extends ChangeNotifier {
   List<LearningProgramBlock> get programBlocks =>
       List.unmodifiable(_programBlocks);
 
+  List<LearningProgramBlock> get functionBlocks => _flattenBlocks(
+    _programBlocks,
+  ).where((block) => _isFunctionBlock(block.definition.kind)).toList();
+
+  List<LearningProgramBlock> get globalBlocks => _programBlocks
+      .where((block) => block.definition.kind == LearningBlockKind.variable)
+      .toList();
+
   bool get hasBlocks => _programBlocks.isNotEmpty;
 
   void addBlock(
@@ -132,8 +144,80 @@ class LearningWorkspaceController extends ChangeNotifier {
   }
 
   void clear() {
-    _programBlocks.clear();
+    _resetProgram();
     notifyListeners();
+  }
+
+  void addUserFunction() {
+    addBlock(
+      _definitionForKind(LearningBlockKind.userFunction),
+      LearningBlockGroupColor.violet,
+    );
+  }
+
+  void addGlobalVariable() {
+    addBlock(
+      _definitionForKind(LearningBlockKind.variable),
+      LearningBlockGroupColor.blue,
+      index: 0,
+    );
+  }
+
+  void addRequiredFunction(LearningBlockKind kind) {
+    if (kind != LearningBlockKind.setup && kind != LearningBlockKind.loop) {
+      return;
+    }
+
+    if (functionBlocks.any((block) => block.definition.kind == kind)) {
+      return;
+    }
+
+    addBlock(_definitionForKind(kind), LearningBlockGroupColor.teal);
+  }
+
+  void _resetProgram() {
+    _programBlocks
+      ..clear()
+      ..addAll([
+        _createProgramBlock(
+          _definitionForKind(LearningBlockKind.setup),
+          LearningBlockGroupColor.teal,
+        ),
+        _createProgramBlock(
+          _definitionForKind(LearningBlockKind.loop),
+          LearningBlockGroupColor.teal,
+        ),
+      ]);
+  }
+
+  LearningProgramBlock _createProgramBlock(
+    LearningBlockDefinition definition,
+    LearningBlockGroupColor groupColor,
+  ) {
+    return LearningProgramBlock(
+      id: _nextId++,
+      definition: definition,
+      groupColor: groupColor,
+      children: [],
+    );
+  }
+
+  LearningBlockDefinition _definitionForKind(LearningBlockKind kind) {
+    for (final group in paletteGroups) {
+      for (final block in group.blocks) {
+        if (block.kind == kind) {
+          return block;
+        }
+      }
+    }
+
+    throw StateError('Unknown learning block kind: $kind');
+  }
+
+  bool _isFunctionBlock(LearningBlockKind kind) {
+    return kind == LearningBlockKind.setup ||
+        kind == LearningBlockKind.loop ||
+        kind == LearningBlockKind.userFunction;
   }
 
   String buildPreviewSource() {

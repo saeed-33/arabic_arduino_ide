@@ -247,6 +247,17 @@ Current Step 26 nested drop placement baseline:
 - Educational placement warnings understand nested blocks and do not warn for function-body blocks placed inside a container.
 - Existing workspace blocks still cannot be dragged to reorder; this step handles dropping new palette blocks into a chosen position.
 
+Current Step 27 learning program structure baseline:
+
+- App section navigation appears horizontally at the top of the window.
+- Learning Mode starts with the required Arduino functions `initialize / إعداد` and `loop / حلقة`.
+- Learning Mode has a right-side program outline panel.
+- The outline panel lists functions currently present in the program.
+- The outline panel can add a user function.
+- The outline panel can add a global variable.
+- The outline panel can restore required `initialize` and `loop` functions if they are deleted.
+- Horizontal block lists are shown right-to-left.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.
