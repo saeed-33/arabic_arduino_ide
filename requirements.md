@@ -137,6 +137,13 @@ Current Step 14 developer diagnostics usability baseline:
 - Long parse tree node text is compacted in the UI.
 - Raw error messages wrap instead of stretching across the screen.
 
+Current Step 15 friendly errors baseline:
+
+- Friendly Errors maps raw compiler diagnostics into Arabic educational messages.
+- Raw Errors remains unchanged for developer inspection.
+- Mapping is display logic only; compiler behavior is not duplicated or modified.
+- Friendly messages include title, explanation, location, and suggested fix.
+
 ### Kids Mode
 
 The second mode to build after Pro Mode is complete.

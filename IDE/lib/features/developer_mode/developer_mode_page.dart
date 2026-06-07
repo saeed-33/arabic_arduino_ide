@@ -5,6 +5,7 @@ import 'application/developer_diagnostics_controller.dart';
 import 'domain/ast_node_info.dart';
 import 'domain/build_stage_info.dart';
 import 'domain/compiler_runtime_status.dart';
+import 'domain/friendly_diagnostic.dart';
 import 'domain/parse_tree_node_info.dart';
 import 'domain/raw_diagnostic.dart';
 import 'domain/token_info.dart';
@@ -101,7 +102,7 @@ class _DeveloperModePageState extends State<DeveloperModePage> {
                     _TokensPanel(tokens: _controller.tokens),
                     _RawErrorsPanel(diagnostics: _controller.rawDiagnostics),
                     _FriendlyErrorsPanel(
-                      diagnostics: _controller.rawDiagnostics,
+                      diagnostics: _controller.friendlyDiagnostics,
                     ),
                     _GeneratedCodePanel(lines: _controller.generatedCodeLines),
                     _PipelinePanel(stages: _controller.buildStages),
@@ -423,10 +424,14 @@ class _RawErrorsPanel extends StatelessWidget {
 class _FriendlyErrorsPanel extends StatelessWidget {
   const _FriendlyErrorsPanel({required this.diagnostics});
 
-  final List<RawDiagnostic> diagnostics;
+  final List<FriendlyDiagnostic> diagnostics;
 
   @override
   Widget build(BuildContext context) {
+    if (diagnostics.isEmpty) {
+      return const Center(child: Text('لا توجد رسائل تعليمية حاليا.'));
+    }
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: diagnostics
@@ -434,8 +439,20 @@ class _FriendlyErrorsPanel extends StatelessWidget {
             (diagnostic) => Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text(
-                  'رسالة تعليمية مقترحة: سنحوّل ${diagnostic.code} إلى شرح مناسب للمتعلمين لاحقا.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      diagnostic.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(diagnostic.explanation),
+                    const SizedBox(height: 8),
+                    Text('المكان: ${diagnostic.location}'),
+                    const SizedBox(height: 8),
+                    Text('اقتراح: ${diagnostic.suggestion}'),
+                  ],
                 ),
               ),
             ),

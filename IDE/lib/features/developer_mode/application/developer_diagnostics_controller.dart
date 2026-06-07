@@ -4,10 +4,12 @@ import '../domain/ast_node_info.dart';
 import '../domain/build_stage_info.dart';
 import '../domain/compiler_diagnostics_snapshot.dart';
 import '../domain/compiler_runtime_status.dart';
+import '../domain/friendly_diagnostic.dart';
 import '../domain/parse_tree_node_info.dart';
 import '../domain/raw_diagnostic.dart';
 import '../domain/token_info.dart';
 import 'compiler_diagnostics_adapter.dart';
+import 'friendly_diagnostic_mapper.dart';
 
 class DeveloperDiagnosticsController extends ChangeNotifier {
   DeveloperDiagnosticsController({CompilerDiagnosticsAdapter? compilerAdapter})
@@ -18,6 +20,8 @@ class DeveloperDiagnosticsController extends ChangeNotifier {
   }
 
   final CompilerDiagnosticsAdapter _compilerAdapter;
+  final FriendlyDiagnosticMapper _friendlyDiagnosticMapper =
+      const FriendlyDiagnosticMapper();
   late CompilerDiagnosticsSnapshot _snapshot;
   CompilerRuntimeStatus? _runtimeStatus;
 
@@ -29,6 +33,8 @@ class DeveloperDiagnosticsController extends ChangeNotifier {
   AstNodeInfo get astRoot => _snapshot.astRoot;
   List<TokenInfo> get tokens => _snapshot.tokens;
   List<RawDiagnostic> get rawDiagnostics => _snapshot.rawDiagnostics;
+  List<FriendlyDiagnostic> get friendlyDiagnostics =>
+      _friendlyDiagnosticMapper.mapAll(_snapshot.rawDiagnostics);
   List<String> get generatedCodeLines => _snapshot.generatedCodeLines;
   List<BuildStageInfo> get buildStages => _snapshot.buildStages;
   List<String> get internalLogs => _snapshot.internalLogs;
