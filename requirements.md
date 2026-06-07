@@ -213,6 +213,15 @@ Current Step 22 learning block tips baseline:
 - The tip includes the block purpose.
 - This is a UI presentation change only; generated code and compiler integration are unchanged.
 
+Current Step 23 learning drag/drop baseline:
+
+- The full block library appears horizontally at the bottom of Learning Mode.
+- The program workspace appears above the block library.
+- Palette blocks can be dragged from the library.
+- The program workspace accepts dropped palette blocks and adds them to the program.
+- The add button remains available as a simple fallback.
+- Drag/drop only adds blocks; reordering existing program blocks is not implemented yet.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.

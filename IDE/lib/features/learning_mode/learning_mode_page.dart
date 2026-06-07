@@ -9,6 +9,13 @@ typedef LearningBlockAddCallback =
       LearningBlockGroupColor groupColor,
     );
 
+class _LearningBlockDragData {
+  const _LearningBlockDragData({required this.block, required this.groupColor});
+
+  final LearningBlockDefinition block;
+  final LearningBlockGroupColor groupColor;
+}
+
 class LearningModePage extends StatefulWidget {
   const LearningModePage({super.key});
 
@@ -48,20 +55,21 @@ class _LearningModePageState extends State<LearningModePage> {
               ),
               const SizedBox(height: 12),
               Expanded(
-                child: Row(
+                child: Column(
                   children: [
-                    SizedBox(
-                      width: 300,
-                      child: _BlockPalette(
-                        groups: _controller.paletteGroups,
-                        onAdd: _controller.addBlock,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
                     Expanded(
                       child: _WorkspacePanel(
                         blocks: _controller.programBlocks,
+                        onAdd: _controller.addBlock,
                         onRemove: _controller.removeBlock,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 210,
+                      child: _BlockPalette(
+                        groups: _controller.paletteGroups,
+                        onAdd: _controller.addBlock,
                       ),
                     ),
                   ],
@@ -349,7 +357,44 @@ class _PaletteBlockTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _colorForGroup(groupColor);
     final textTheme = Theme.of(context).textTheme;
+    final tile = _PaletteBlockSurface(
+      block: block,
+      groupColor: groupColor,
+      color: color,
+      textTheme: textTheme,
+      onAdd: onAdd,
+    );
 
+    return Draggable<_LearningBlockDragData>(
+      data: _LearningBlockDragData(block: block, groupColor: groupColor),
+      feedback: Material(
+        elevation: 8,
+        color: Colors.transparent,
+        child: SizedBox(width: 260, child: tile),
+      ),
+      childWhenDragging: Opacity(opacity: 0.45, child: tile),
+      child: tile,
+    );
+  }
+}
+
+class _PaletteBlockSurface extends StatelessWidget {
+  const _PaletteBlockSurface({
+    required this.block,
+    required this.groupColor,
+    required this.color,
+    required this.textTheme,
+    required this.onAdd,
+  });
+
+  final LearningBlockDefinition block;
+  final LearningBlockGroupColor groupColor;
+  final Color color;
+  final TextTheme textTheme;
+  final LearningBlockAddCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: _tintForGroup(color),
@@ -404,45 +449,76 @@ class _PaletteBlockTile extends StatelessWidget {
 }
 
 class _WorkspacePanel extends StatelessWidget {
-  const _WorkspacePanel({required this.blocks, required this.onRemove});
+  const _WorkspacePanel({
+    required this.blocks,
+    required this.onAdd,
+    required this.onRemove,
+  });
 
   final List<LearningProgramBlock> blocks;
+  final LearningBlockAddCallback onAdd;
   final ValueChanged<int> onRemove;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'مساحة البرنامج',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: blocks.isEmpty
-                  ? const Center(child: Text('أضف بلوكا من مكتبة البلوكات.'))
-                  : ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemBuilder: (context, index) {
-                        final block = blocks[index];
-                        return _WorkspaceBlockTile(
-                          index: index,
-                          block: block,
-                          onRemove: onRemove,
-                        );
-                      },
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 10),
-                      itemCount: blocks.length,
+    return DragTarget<_LearningBlockDragData>(
+      onAcceptWithDetails: (details) {
+        onAdd(details.data.block, details.data.groupColor);
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isDropActive = candidateData.isNotEmpty;
+        return Card(
+          color: isDropActive
+              ? Theme.of(context).colorScheme.primaryContainer
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'مساحة البرنامج',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                     ),
+                    if (isDropActive)
+                      Text(
+                        'أفلت البلوك هنا',
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: blocks.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'اسحب بلوكا من مكتبة البلوكات وأفلته هنا.',
+                          ),
+                        )
+                      : ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemBuilder: (context, index) {
+                            final block = blocks[index];
+                            return _WorkspaceBlockTile(
+                              index: index,
+                              block: block,
+                              onRemove: onRemove,
+                            );
+                          },
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: 10),
+                          itemCount: blocks.length,
+                        ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
