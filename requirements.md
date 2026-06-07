@@ -205,6 +205,14 @@ Current Step 21 learning tabs baseline:
 - Blocks inside the selected group are arranged horizontally.
 - Program assembly blocks are arranged horizontally with horizontal scrolling.
 
+Current Step 22 learning block tips baseline:
+
+- Block descriptions are not shown permanently on the block surface.
+- Each block shows an information tip control.
+- The tip includes the block placement level.
+- The tip includes the block purpose.
+- This is a UI presentation change only; generated code and compiler integration are unchanged.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.

@@ -384,11 +384,9 @@ class _PaletteBlockTile extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      _PlacementBadge(placement: block.placement, color: color),
+                      _BlockTipButton(block: block, color: color),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(block.description, style: textTheme.bodySmall),
                 ],
               ),
             ),
@@ -485,17 +483,9 @@ class _WorkspaceBlockTile extends StatelessWidget {
           ),
         ),
         title: Text(block.definition.title, overflow: TextOverflow.ellipsis),
-        subtitle: Wrap(
-          spacing: 8,
-          runSpacing: 6,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(block.definition.description),
-            _PlacementBadge(
-              placement: block.definition.placement,
-              color: color,
-            ),
-          ],
+        subtitle: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: _BlockTipButton(block: block.definition, color: color),
         ),
         trailing: IconButton(
           tooltip: 'حذف',
@@ -512,29 +502,31 @@ class _WorkspaceBlockTile extends StatelessWidget {
   }
 }
 
-class _PlacementBadge extends StatelessWidget {
-  const _PlacementBadge({required this.placement, required this.color});
+class _BlockTipButton extends StatelessWidget {
+  const _BlockTipButton({required this.block, required this.color});
 
-  final LearningBlockPlacement placement;
+  final LearningBlockDefinition block;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withAlpha(28),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withAlpha(96)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        child: Text(
-          _placementLabel(placement),
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w700,
-          ),
+    return Tooltip(
+      message:
+          'المستوى: ${_placementLabel(block.placement)}\nالغرض: ${block.description}',
+      textStyle: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: Colors.white),
+      preferBelow: false,
+      child: Container(
+        width: 30,
+        height: 30,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withAlpha(28),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withAlpha(96)),
         ),
+        child: Icon(Icons.info_outline, size: 16, color: color),
       ),
     );
   }
