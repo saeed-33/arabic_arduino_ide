@@ -477,7 +477,7 @@ class _PuzzleBlockShell extends StatelessWidget {
             Positioned.fill(
               child: CustomPaint(painter: _ScratchBlockPainter(color: color)),
             ),
-            PositionedDirectional.fill(
+            Positioned.fill(
               child: Padding(
                 padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 14),
                 child: child,
@@ -1078,18 +1078,30 @@ Color _tintForGroup(Color color) {
 
 Color _darken(Color color) {
   return Color.fromARGB(
-    color.alpha,
-    (color.red * 0.72).round(),
-    (color.green * 0.72).round(),
-    (color.blue * 0.72).round(),
+    _colorAlpha(color),
+    (_colorRed(color) * 0.72).round(),
+    (_colorGreen(color) * 0.72).round(),
+    (_colorBlue(color) * 0.72).round(),
   );
 }
 
 Color _lighten(Color color) {
+  final red = _colorRed(color);
+  final green = _colorGreen(color);
+  final blue = _colorBlue(color);
+
   return Color.fromARGB(
-    color.alpha,
-    color.red + ((255 - color.red) * 0.20).round(),
-    color.green + ((255 - color.green) * 0.20).round(),
-    color.blue + ((255 - color.blue) * 0.20).round(),
+    _colorAlpha(color),
+    red + ((255 - red) * 0.20).round(),
+    green + ((255 - green) * 0.20).round(),
+    blue + ((255 - blue) * 0.20).round(),
   );
 }
+
+int _colorAlpha(Color color) => (color.a * 255).round().clamp(0, 255);
+
+int _colorRed(Color color) => (color.r * 255).round().clamp(0, 255);
+
+int _colorGreen(Color color) => (color.g * 255).round().clamp(0, 255);
+
+int _colorBlue(Color color) => (color.b * 255).round().clamp(0, 255);

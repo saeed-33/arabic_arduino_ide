@@ -258,6 +258,13 @@ Current Step 27 learning program structure baseline:
 - The outline panel can restore required `initialize` and `loop` functions if they are deleted.
 - Horizontal block lists are shown right-to-left.
 
+Current Step 28 stability fix baseline:
+
+- Learning Mode deep block deletion no longer depends on a non-returning list API.
+- Scratch-like block content positioning uses supported Flutter widgets.
+- Scratch-like color helpers use non-deprecated color channel APIs.
+- Dart analysis for `lib` reports no issues.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.

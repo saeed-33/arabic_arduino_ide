@@ -318,8 +318,9 @@ class LearningWorkspaceController extends ChangeNotifier {
   }
 
   bool _removeBlock(List<LearningProgramBlock> blocks, int id) {
-    final removed = blocks.removeWhere((block) => block.id == id);
-    if (removed > 0) {
+    final initialLength = blocks.length;
+    blocks.removeWhere((block) => block.id == id);
+    if (blocks.length != initialLength) {
       return true;
     }
 
