@@ -43,9 +43,9 @@ class LearningWorkspaceController extends ChangeNotifier {
       blocks: [
         LearningBlockDefinition(
           kind: LearningBlockKind.print,
-          title: 'اكتب',
-          description: 'أمر كتابة تجريبي داخل دالة.',
-          generatedCode: 'اكتب("مرحبا")؛',
+          title: 'كتابة نص',
+          description: 'استدعاء دالة كتابة متوافق مع قواعد المترجم.',
+          generatedCode: 'كتابة_تسلسلية("مرحبا")؛',
         ),
         LearningBlockDefinition(
           kind: LearningBlockKind.delay,

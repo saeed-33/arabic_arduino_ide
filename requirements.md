@@ -177,6 +177,13 @@ Current Step 17 learning block groups baseline:
 - User functions group exists with define/call function placeholders.
 - Preview remains optional and is not shown permanently.
 
+Current compiler dictionary generation baseline:
+
+- Learning Mode generated code should follow `ArArduinoLexer.g4` and `ArArduinoParser.g4`.
+- Top-level generated snippets use valid declarations such as `متغير` and `دالة`.
+- Statement snippets should be valid inside compiler blocks.
+- Keywords that exist in the lexer but are not accepted by parser statement rules should not be generated as standalone statements.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.
