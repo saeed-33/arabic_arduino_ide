@@ -155,6 +155,16 @@ Planned features:
 - Convert blocks into Arabic Arduino code.
 - Beginner-friendly labels and guidance.
 
+Current Step 16 learning mode shell baseline:
+
+- Learning Mode has a block palette.
+- Learning Mode has a workspace/program area.
+- Users can add, remove, and clear blocks.
+- Source preview is optional and appears only after pressing `معاينة الكود`.
+- No permanent live source preview.
+- No drag/drop yet.
+- No compiler analysis from Learning Mode yet.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.
