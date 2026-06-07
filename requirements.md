@@ -230,6 +230,14 @@ Current Step 24 learning puzzle blocks baseline:
 - The block tip remains available inside the puzzle block.
 - This is a visual presentation change only; drag/drop behavior and generated code are unchanged.
 
+Current Step 25 Scratch-like block tips baseline:
+
+- Learning blocks no longer show a dedicated information icon.
+- Hovering any place on a block shows the block tip.
+- The block tip includes placement level and purpose.
+- Block visuals are closer to Scratch/App Inventor with a stronger colored body and connector-like top/bottom shape.
+- This is a presentation change only; drag/drop behavior and generated code are unchanged.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.

@@ -396,6 +396,7 @@ class _PaletteBlockSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _PuzzleBlockShell(
+      block: block,
       color: color,
       child: Row(
         children: [
@@ -414,7 +415,6 @@ class _PaletteBlockSurface extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                _BlockTipButton(block: block, color: color),
               ],
             ),
           ),
@@ -430,136 +430,105 @@ class _PaletteBlockSurface extends StatelessWidget {
 }
 
 class _PuzzleBlockShell extends StatelessWidget {
-  const _PuzzleBlockShell({required this.color, required this.child});
+  const _PuzzleBlockShell({
+    required this.block,
+    required this.color,
+    required this.child,
+  });
 
+  final LearningBlockDefinition block;
   final Color color;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 76,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          PositionedDirectional(
-            top: 22,
-            start: -10,
-            child: _PuzzleSocket(color: color),
-          ),
-          PositionedDirectional(
-            top: 22,
-            end: -10,
-            child: _PuzzleKnob(color: color),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _darken(color), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withAlpha(52),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+    return Tooltip(
+      message:
+          'المستوى: ${_placementLabel(block.placement)}\nالغرض: ${block.description}',
+      textStyle: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: Colors.white),
+      preferBelow: false,
+      child: SizedBox(
+        height: 78,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(painter: _ScratchBlockPainter(color: color)),
             ),
-            child: Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(18, 10, 18, 10),
-              child: child,
+            PositionedDirectional.fill(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 14),
+                child: child,
+              ),
             ),
-          ),
-          PositionedDirectional(
-            top: -7,
-            start: 58,
-            child: _PuzzleTopConnector(color: color),
-          ),
-          PositionedDirectional(
-            bottom: -7,
-            start: 92,
-            child: _PuzzleBottomConnector(color: color),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _PuzzleKnob extends StatelessWidget {
-  const _PuzzleKnob({required this.color});
+class _ScratchBlockPainter extends CustomPainter {
+  const _ScratchBlockPainter({required this.color});
 
   final Color color;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 22,
-      height: 32,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _darken(color), width: 2),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final path = _scratchBlockPath(size);
+    final shadowPaint = Paint()
+      ..color = color.withAlpha(48)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    final fillPaint = Paint()..color = color;
+    final highlightPaint = Paint()
+      ..color = _lighten(color).withAlpha(84)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final borderPaint = Paint()
+      ..color = _darken(color)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    canvas.drawPath(path.shift(const Offset(0, 3)), shadowPaint);
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, borderPaint);
+
+    final highlightPath = Path()
+      ..moveTo(18, 17)
+      ..lineTo(size.width - 24, 17);
+    canvas.drawPath(highlightPath, highlightPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScratchBlockPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
 
-class _PuzzleSocket extends StatelessWidget {
-  const _PuzzleSocket({required this.color});
+Path _scratchBlockPath(Size size) {
+  final width = size.width;
+  final height = size.height;
 
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 22,
-      height: 32,
-      decoration: BoxDecoration(
-        color: _tintForGroup(color),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _darken(color), width: 2),
-      ),
-    );
-  }
-}
-
-class _PuzzleTopConnector extends StatelessWidget {
-  const _PuzzleTopConnector({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 16,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _darken(color), width: 2),
-      ),
-    );
-  }
-}
-
-class _PuzzleBottomConnector extends StatelessWidget {
-  const _PuzzleBottomConnector({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 16,
-      decoration: BoxDecoration(
-        color: _tintForGroup(color),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _darken(color), width: 2),
-      ),
-    );
-  }
+  return Path()
+    ..moveTo(14, 10)
+    ..lineTo(56, 10)
+    ..cubicTo(62, 10, 64, 20, 74, 20)
+    ..lineTo(102, 20)
+    ..cubicTo(112, 20, 114, 10, 122, 10)
+    ..lineTo(width - 14, 10)
+    ..quadraticBezierTo(width - 4, 10, width - 4, 20)
+    ..lineTo(width - 4, height - 18)
+    ..quadraticBezierTo(width - 4, height - 8, width - 14, height - 8)
+    ..lineTo(132, height - 8)
+    ..cubicTo(124, height - 8, 122, height, 112, height)
+    ..lineTo(84, height)
+    ..cubicTo(74, height, 72, height - 8, 64, height - 8)
+    ..lineTo(14, height - 8)
+    ..quadraticBezierTo(4, height - 8, 4, height - 18)
+    ..lineTo(4, 20)
+    ..quadraticBezierTo(4, 10, 14, 10)
+    ..close();
 }
 
 class _WorkspacePuzzleBlock extends StatelessWidget {
@@ -581,6 +550,7 @@ class _WorkspacePuzzleBlock extends StatelessWidget {
     return SizedBox(
       width: 300,
       child: _PuzzleBlockShell(
+        block: block.definition,
         color: color,
         child: Row(
           children: [
@@ -616,7 +586,6 @@ class _WorkspacePuzzleBlock extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  _BlockTipButton(block: block.definition, color: color),
                 ],
               ),
             ),
@@ -729,36 +698,6 @@ class _WorkspaceBlockTile extends StatelessWidget {
   }
 }
 
-class _BlockTipButton extends StatelessWidget {
-  const _BlockTipButton({required this.block, required this.color});
-
-  final LearningBlockDefinition block;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message:
-          'المستوى: ${_placementLabel(block.placement)}\nالغرض: ${block.description}',
-      textStyle: Theme.of(
-        context,
-      ).textTheme.bodySmall?.copyWith(color: Colors.white),
-      preferBelow: false,
-      child: Container(
-        width: 30,
-        height: 30,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.white.withAlpha(34),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withAlpha(96)),
-        ),
-        child: const Icon(Icons.info_outline, size: 16, color: Colors.white),
-      ),
-    );
-  }
-}
-
 String _placementLabel(LearningBlockPlacement placement) {
   return switch (placement) {
     LearningBlockPlacement.topLevel => 'مستوى البرنامج',
@@ -786,5 +725,14 @@ Color _darken(Color color) {
     (color.red * 0.72).round(),
     (color.green * 0.72).round(),
     (color.blue * 0.72).round(),
+  );
+}
+
+Color _lighten(Color color) {
+  return Color.fromARGB(
+    color.alpha,
+    color.red + ((255 - color.red) * 0.20).round(),
+    color.green + ((255 - color.green) * 0.20).round(),
+    color.blue + ((255 - color.blue) * 0.20).round(),
   );
 }
