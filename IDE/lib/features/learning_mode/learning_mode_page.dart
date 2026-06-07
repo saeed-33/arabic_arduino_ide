@@ -197,7 +197,14 @@ class _PaletteGroupSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(radius: 14, child: Text('${group.number}')),
+              Container(
+                width: 12,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: _colorForGroup(group.color),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -217,6 +224,16 @@ class _PaletteGroupSection extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _colorForGroup(LearningBlockGroupColor color) {
+    return switch (color) {
+      LearningBlockGroupColor.teal => const Color(0xFF0F766E),
+      LearningBlockGroupColor.blue => const Color(0xFF2563EB),
+      LearningBlockGroupColor.amber => const Color(0xFFD97706),
+      LearningBlockGroupColor.rose => const Color(0xFFE11D48),
+      LearningBlockGroupColor.violet => const Color(0xFF7C3AED),
+    };
   }
 }
 

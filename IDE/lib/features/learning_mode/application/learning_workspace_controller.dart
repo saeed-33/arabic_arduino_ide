@@ -8,8 +8,8 @@ class LearningWorkspaceController extends ChangeNotifier {
 
   List<LearningBlockGroup> get paletteGroups => const [
     LearningBlockGroup(
-      number: 1,
       title: 'البداية والتكرار',
+      color: LearningBlockGroupColor.teal,
       blocks: [
         LearningBlockDefinition(
           kind: LearningBlockKind.setup,
@@ -26,8 +26,8 @@ class LearningWorkspaceController extends ChangeNotifier {
       ],
     ),
     LearningBlockGroup(
-      number: 2,
       title: 'المتغيرات',
+      color: LearningBlockGroupColor.blue,
       blocks: [
         LearningBlockDefinition(
           kind: LearningBlockKind.variable,
@@ -38,8 +38,8 @@ class LearningWorkspaceController extends ChangeNotifier {
       ],
     ),
     LearningBlockGroup(
-      number: 3,
       title: 'الأوامر',
+      color: LearningBlockGroupColor.amber,
       blocks: [
         LearningBlockDefinition(
           kind: LearningBlockKind.print,
@@ -56,8 +56,8 @@ class LearningWorkspaceController extends ChangeNotifier {
       ],
     ),
     LearningBlockGroup(
-      number: 4,
       title: 'الشروط',
+      color: LearningBlockGroupColor.rose,
       blocks: [
         LearningBlockDefinition(
           kind: LearningBlockKind.ifStatement,
@@ -68,8 +68,8 @@ class LearningWorkspaceController extends ChangeNotifier {
       ],
     ),
     LearningBlockGroup(
-      number: 5,
       title: 'توابع المستخدم',
+      color: LearningBlockGroupColor.violet,
       blocks: [
         LearningBlockDefinition(
           kind: LearningBlockKind.userFunction,

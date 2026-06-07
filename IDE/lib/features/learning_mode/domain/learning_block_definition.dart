@@ -9,15 +9,17 @@ enum LearningBlockKind {
   callUserFunction,
 }
 
+enum LearningBlockGroupColor { teal, blue, amber, rose, violet }
+
 class LearningBlockGroup {
   const LearningBlockGroup({
-    required this.number,
     required this.title,
+    required this.color,
     required this.blocks,
   });
 
-  final int number;
   final String title;
+  final LearningBlockGroupColor color;
   final List<LearningBlockDefinition> blocks;
 }
 

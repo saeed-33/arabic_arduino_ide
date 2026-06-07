@@ -167,15 +167,20 @@ Current Step 16 learning mode shell baseline:
 
 Current Step 17 learning block groups baseline:
 
-- Learning block palette is split into numbered groups.
+- Learning block palette is split into named colored groups.
 - Current groups are:
-  - 1: start and loop
-  - 2: variables
-  - 3: commands
-  - 4: conditions
-  - 5: user functions
+  - start and loop
+  - variables
+  - commands
+  - conditions
+  - user functions
 - User functions group exists with define/call function placeholders.
 - Preview remains optional and is not shown permanently.
+
+Current group display baseline:
+
+- Group numbers are not shown.
+- Each group has a fixed name and color.
 
 Current compiler dictionary generation baseline:
 

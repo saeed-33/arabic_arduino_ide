@@ -2,7 +2,7 @@
 
 ## Goal
 
-Organize Learning Mode blocks into numbered groups and add a dedicated group for functions created by the user.
+Organize Learning Mode blocks into named colored groups and add a dedicated group for functions created by the user.
 
 ## Implemented
 
@@ -14,13 +14,13 @@ Added:
 
 ## Current Groups
 
-```text
-1. البداية والتكرار
-2. المتغيرات
-3. الأوامر
-4. الشروط
-5. توابع المستخدم
-```
+- `البداية والتكرار`
+- `المتغيرات`
+- `الأوامر`
+- `الشروط`
+- `توابع المستخدم`
+
+Each group has a fixed color marker. Group numbers are not shown in the UI.
 
 ## User Functions Group
 
