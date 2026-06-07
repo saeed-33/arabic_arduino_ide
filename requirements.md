@@ -222,6 +222,14 @@ Current Step 23 learning drag/drop baseline:
 - The add button remains available as a simple fallback.
 - Drag/drop only adds blocks; reordering existing program blocks is not implemented yet.
 
+Current Step 24 learning puzzle blocks baseline:
+
+- Learning blocks use a puzzle-like educational shape.
+- Puzzle block color comes from the block group.
+- Palette blocks, dragged feedback blocks, and workspace blocks share the puzzle visual language.
+- The block tip remains available inside the puzzle block.
+- This is a visual presentation change only; drag/drop behavior and generated code are unchanged.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.

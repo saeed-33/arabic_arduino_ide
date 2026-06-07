@@ -249,7 +249,7 @@ class _PaletteGroupBlocks extends StatelessWidget {
             itemBuilder: (context, index) {
               final block = group.blocks[index];
               return SizedBox(
-                width: 260,
+                width: 280,
                 child: _PaletteBlockTile(
                   block: block,
                   groupColor: group.color,
@@ -370,7 +370,7 @@ class _PaletteBlockTile extends StatelessWidget {
       feedback: Material(
         elevation: 8,
         color: Colors.transparent,
-        child: SizedBox(width: 260, child: tile),
+        child: SizedBox(width: 280, child: tile),
       ),
       childWhenDragging: Opacity(opacity: 0.45, child: tile),
       child: tile,
@@ -395,51 +395,236 @@ class _PaletteBlockSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    return _PuzzleBlockShell(
+      color: color,
+      child: Row(
+        children: [
+          const SizedBox(width: 6),
+          Expanded(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  block.title,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                _BlockTipButton(block: block, color: color),
+              ],
+            ),
+          ),
+          IconButton.filledTonal(
+            tooltip: 'إضافة',
+            onPressed: () => onAdd(block, groupColor),
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PuzzleBlockShell extends StatelessWidget {
+  const _PuzzleBlockShell({required this.color, required this.child});
+
+  final Color color;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 76,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          PositionedDirectional(
+            top: 22,
+            start: -10,
+            child: _PuzzleSocket(color: color),
+          ),
+          PositionedDirectional(
+            top: 22,
+            end: -10,
+            child: _PuzzleKnob(color: color),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _darken(color), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withAlpha(52),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(18, 10, 18, 10),
+              child: child,
+            ),
+          ),
+          PositionedDirectional(
+            top: -7,
+            start: 58,
+            child: _PuzzleTopConnector(color: color),
+          ),
+          PositionedDirectional(
+            bottom: -7,
+            start: 92,
+            child: _PuzzleBottomConnector(color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PuzzleKnob extends StatelessWidget {
+  const _PuzzleKnob({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 32,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _darken(color), width: 2),
+      ),
+    );
+  }
+}
+
+class _PuzzleSocket extends StatelessWidget {
+  const _PuzzleSocket({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 32,
       decoration: BoxDecoration(
         color: _tintForGroup(color),
-        border: Border.all(color: color.withAlpha(96)),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _darken(color), width: 2),
       ),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(10, 10, 8, 10),
+    );
+  }
+}
+
+class _PuzzleTopConnector extends StatelessWidget {
+  const _PuzzleTopConnector({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 16,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _darken(color), width: 2),
+      ),
+    );
+  }
+}
+
+class _PuzzleBottomConnector extends StatelessWidget {
+  const _PuzzleBottomConnector({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 16,
+      decoration: BoxDecoration(
+        color: _tintForGroup(color),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _darken(color), width: 2),
+      ),
+    );
+  }
+}
+
+class _WorkspacePuzzleBlock extends StatelessWidget {
+  const _WorkspacePuzzleBlock({
+    required this.index,
+    required this.block,
+    required this.onRemove,
+  });
+
+  final int index;
+  final LearningProgramBlock block;
+  final ValueChanged<int> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colorForGroup(block.groupColor);
+    final textTheme = Theme.of(context).textTheme;
+
+    return SizedBox(
+      width: 300,
+      child: _PuzzleBlockShell(
+        color: color,
         child: Row(
           children: [
             Container(
-              width: 10,
-              height: 54,
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: color,
+                color: Colors.white.withAlpha(34),
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white.withAlpha(96)),
+              ),
+              child: Text(
+                '${index + 1}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        block.title,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      _BlockTipButton(block: block, color: color),
-                    ],
+                  Text(
+                    block.definition.title,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
+                  _BlockTipButton(block: block.definition, color: color),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            IconButton.filledTonal(
-              tooltip: 'إضافة',
-              onPressed: () => onAdd(block, groupColor),
-              icon: const Icon(Icons.add),
+            IconButton(
+              tooltip: 'حذف',
+              onPressed: () => onRemove(block.id),
+              color: Colors.white,
+              icon: const Icon(Icons.close),
             ),
           ],
         ),
@@ -536,44 +721,10 @@ class _WorkspaceBlockTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _colorForGroup(block.groupColor);
-
-    return SizedBox(
-      width: 280,
-      child: ListTile(
-        contentPadding: const EdgeInsetsDirectional.fromSTEB(8, 6, 8, 6),
-        leading: Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '${index + 1}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        title: Text(block.definition.title, overflow: TextOverflow.ellipsis),
-        subtitle: Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: _BlockTipButton(block: block.definition, color: color),
-        ),
-        trailing: IconButton(
-          tooltip: 'حذف',
-          onPressed: () => onRemove(block.id),
-          icon: const Icon(Icons.close),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: color.withAlpha(112)),
-        ),
-        tileColor: _tintForGroup(color),
-      ),
+    return _WorkspacePuzzleBlock(
+      index: index,
+      block: block,
+      onRemove: onRemove,
     );
   }
 }
@@ -598,11 +749,11 @@ class _BlockTipButton extends StatelessWidget {
         height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: color.withAlpha(28),
+          color: Colors.white.withAlpha(34),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withAlpha(96)),
+          border: Border.all(color: Colors.white.withAlpha(96)),
         ),
-        child: Icon(Icons.info_outline, size: 16, color: color),
+        child: const Icon(Icons.info_outline, size: 16, color: Colors.white),
       ),
     );
   }
@@ -627,4 +778,13 @@ Color _colorForGroup(LearningBlockGroupColor color) {
 
 Color _tintForGroup(Color color) {
   return Color.alphaBlend(color.withAlpha(18), Colors.white);
+}
+
+Color _darken(Color color) {
+  return Color.fromARGB(
+    color.alpha,
+    (color.red * 0.72).round(),
+    (color.green * 0.72).round(),
+    (color.blue * 0.72).round(),
+  );
 }
