@@ -6,8 +6,10 @@ import 'domain/learning_block_definition.dart';
 typedef LearningBlockAddCallback =
     void Function(
       LearningBlockDefinition block,
-      LearningBlockGroupColor groupColor,
-    );
+      LearningBlockGroupColor groupColor, {
+      int? parentId,
+      int? index,
+    });
 
 class _LearningBlockDragData {
   const _LearningBlockDragData({required this.block, required this.groupColor});
@@ -535,11 +537,13 @@ class _WorkspacePuzzleBlock extends StatelessWidget {
   const _WorkspacePuzzleBlock({
     required this.index,
     required this.block,
+    required this.onAdd,
     required this.onRemove,
   });
 
   final int index;
   final LearningProgramBlock block;
+  final LearningBlockAddCallback onAdd;
   final ValueChanged<int> onRemove;
 
   @override
@@ -547,57 +551,222 @@ class _WorkspacePuzzleBlock extends StatelessWidget {
     final color = _colorForGroup(block.groupColor);
     final textTheme = Theme.of(context).textTheme;
 
-    return SizedBox(
-      width: 300,
-      child: _PuzzleBlockShell(
-        block: block.definition,
-        color: color,
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.white.withAlpha(34),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white.withAlpha(96)),
-              ),
-              child: Text(
-                '${index + 1}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
+    final header = _PuzzleBlockShell(
+      block: block.definition,
+      color: color,
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(34),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white.withAlpha(96)),
+            ),
+            child: Text(
+              '${index + 1}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    block.definition.title,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  block.definition.title,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            IconButton(
-              tooltip: 'حذف',
-              onPressed: () => onRemove(block.id),
-              color: Colors.white,
-              icon: const Icon(Icons.close),
-            ),
-          ],
-        ),
+          ),
+          IconButton(
+            tooltip: 'حذف',
+            onPressed: () => onRemove(block.id),
+            color: Colors.white,
+            icon: const Icon(Icons.close),
+          ),
+        ],
       ),
+    );
+
+    if (!block.definition.acceptsChildren) {
+      return SizedBox(width: 300, child: header);
+    }
+
+    return SizedBox(
+      width: 420,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          header,
+          _NestedBlockArea(
+            parent: block,
+            color: color,
+            onAdd: onAdd,
+            onRemove: onRemove,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NestedBlockArea extends StatelessWidget {
+  const _NestedBlockArea({
+    required this.parent,
+    required this.color,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final LearningProgramBlock parent;
+  final Color color;
+  final LearningBlockAddCallback onAdd;
+  final ValueChanged<int> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final containsContainer = parent.children.any(
+      (block) => block.definition.acceptsChildren,
+    );
+
+    return Container(
+      height: containsContainer ? 238 : 128,
+      margin: const EdgeInsetsDirectional.only(start: 26, end: 8),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: _tintForGroup(color),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
+        border: Border.all(color: color.withAlpha(96)),
+      ),
+      child: parent.children.isEmpty
+          ? _BlockDropSlot(
+              parentId: parent.id,
+              index: 0,
+              onAdd: onAdd,
+              label: 'أفلت بلوكا داخل ${parent.definition.title}',
+            )
+          : _BlockSequence(
+              blocks: parent.children,
+              parentId: parent.id,
+              onAdd: onAdd,
+              onRemove: onRemove,
+              compact: true,
+            ),
+    );
+  }
+}
+
+class _BlockSequence extends StatelessWidget {
+  const _BlockSequence({
+    required this.blocks,
+    required this.onAdd,
+    required this.onRemove,
+    this.parentId,
+    this.compact = false,
+  });
+
+  final List<LearningProgramBlock> blocks;
+  final int? parentId;
+  final LearningBlockAddCallback onAdd;
+  final ValueChanged<int> onRemove;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemBuilder: (context, index) {
+        if (index.isEven) {
+          return _BlockDropSlot(
+            parentId: parentId,
+            index: index ~/ 2,
+            onAdd: onAdd,
+            compact: compact,
+          );
+        }
+
+        final blockIndex = index ~/ 2;
+        final block = blocks[blockIndex];
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: _WorkspaceBlockTile(
+            index: blockIndex,
+            block: block,
+            onAdd: onAdd,
+            onRemove: onRemove,
+          ),
+        );
+      },
+      itemCount: blocks.length * 2 + 1,
+    );
+  }
+}
+
+class _BlockDropSlot extends StatelessWidget {
+  const _BlockDropSlot({
+    required this.index,
+    required this.onAdd,
+    this.parentId,
+    this.compact = false,
+    this.label,
+  });
+
+  final int? parentId;
+  final int index;
+  final LearningBlockAddCallback onAdd;
+  final bool compact;
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<_LearningBlockDragData>(
+      onAcceptWithDetails: (details) {
+        onAdd(
+          details.data.block,
+          details.data.groupColor,
+          parentId: parentId,
+          index: index,
+        );
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isActive = candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          width: compact ? 94 : 116,
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isActive
+                ? Theme.of(context).colorScheme.primaryContainer
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isActive
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.outlineVariant,
+              width: isActive ? 2 : 1,
+            ),
+          ),
+          child: Text(
+            label ?? 'أفلت هنا',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        );
+      },
     );
   }
 }
@@ -615,64 +784,38 @@ class _WorkspacePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DragTarget<_LearningBlockDragData>(
-      onAcceptWithDetails: (details) {
-        onAdd(details.data.block, details.data.groupColor);
-      },
-      builder: (context, candidateData, rejectedData) {
-        final isDropActive = candidateData.isNotEmpty;
-        return Card(
-          color: isDropActive
-              ? Theme.of(context).colorScheme.primaryContainer
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'مساحة البرنامج',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                    if (isDropActive)
-                      Text(
-                        'أفلت البلوك هنا',
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: blocks.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'اسحب بلوكا من مكتبة البلوكات وأفلته هنا.',
-                          ),
-                        )
-                      : ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemBuilder: (context, index) {
-                            final block = blocks[index];
-                            return _WorkspaceBlockTile(
-                              index: index,
-                              block: block,
-                              onRemove: onRemove,
-                            );
-                          },
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(width: 10),
-                          itemCount: blocks.length,
-                        ),
-                ),
-              ],
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'مساحة البرنامج',
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 12),
+            Expanded(
+              child: blocks.isEmpty
+                  ? Center(
+                      child: SizedBox(
+                        height: 96,
+                        child: _BlockDropSlot(
+                          index: 0,
+                          onAdd: onAdd,
+                          label: 'اسحب بلوكا من المكتبة وأفلته هنا',
+                        ),
+                      ),
+                    )
+                  : _BlockSequence(
+                      blocks: blocks,
+                      onAdd: onAdd,
+                      onRemove: onRemove,
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -681,11 +824,13 @@ class _WorkspaceBlockTile extends StatelessWidget {
   const _WorkspaceBlockTile({
     required this.index,
     required this.block,
+    required this.onAdd,
     required this.onRemove,
   });
 
   final int index;
   final LearningProgramBlock block;
+  final LearningBlockAddCallback onAdd;
   final ValueChanged<int> onRemove;
 
   @override
@@ -693,6 +838,7 @@ class _WorkspaceBlockTile extends StatelessWidget {
     return _WorkspacePuzzleBlock(
       index: index,
       block: block,
+      onAdd: onAdd,
       onRemove: onRemove,
     );
   }

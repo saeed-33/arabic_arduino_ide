@@ -238,6 +238,15 @@ Current Step 25 Scratch-like block tips baseline:
 - Block visuals are closer to Scratch/App Inventor with a stronger colored body and connector-like top/bottom shape.
 - This is a presentation change only; drag/drop behavior and generated code are unchanged.
 
+Current Step 26 nested drop placement baseline:
+
+- The workspace shows drop slots between blocks so users can choose insertion position.
+- Container blocks expose an inner drop area for child blocks.
+- Setup, loop, if, and user function definition blocks accept child blocks.
+- Generated preview source is built from the nested block tree.
+- Educational placement warnings understand nested blocks and do not warn for function-body blocks placed inside a container.
+- Existing workspace blocks still cannot be dragged to reorder; this step handles dropping new palette blocks into a chosen position.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.

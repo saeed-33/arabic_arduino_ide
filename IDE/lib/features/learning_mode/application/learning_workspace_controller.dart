@@ -17,6 +17,7 @@ class LearningWorkspaceController extends ChangeNotifier {
           description: 'مكان أوامر البداية.',
           generatedCode: 'دالة إعداد() : فارغ {\n}',
           placement: LearningBlockPlacement.topLevel,
+          acceptsChildren: true,
         ),
         LearningBlockDefinition(
           kind: LearningBlockKind.loop,
@@ -24,6 +25,7 @@ class LearningWorkspaceController extends ChangeNotifier {
           description: 'أوامر تتكرر دائما.',
           generatedCode: 'دالة حلقة() : فارغ {\n}',
           placement: LearningBlockPlacement.topLevel,
+          acceptsChildren: true,
         ),
       ],
     ),
@@ -70,6 +72,7 @@ class LearningWorkspaceController extends ChangeNotifier {
           description: 'شرط بسيط.',
           generatedCode: 'إذا (العدد > 0) {\n}',
           placement: LearningBlockPlacement.functionBody,
+          acceptsChildren: true,
         ),
       ],
     ),
@@ -83,6 +86,7 @@ class LearningWorkspaceController extends ChangeNotifier {
           description: 'ينشئ تابعا جديدا باسم يختاره المستخدم لاحقا.',
           generatedCode: 'دالة تابعي() : فارغ {\n}',
           placement: LearningBlockPlacement.topLevel,
+          acceptsChildren: true,
         ),
         LearningBlockDefinition(
           kind: LearningBlockKind.callUserFunction,
@@ -102,20 +106,28 @@ class LearningWorkspaceController extends ChangeNotifier {
 
   void addBlock(
     LearningBlockDefinition definition,
-    LearningBlockGroupColor groupColor,
-  ) {
-    _programBlocks.add(
-      LearningProgramBlock(
-        id: _nextId++,
-        definition: definition,
-        groupColor: groupColor,
-      ),
+    LearningBlockGroupColor groupColor, {
+    int? parentId,
+    int? index,
+  }) {
+    final newBlock = LearningProgramBlock(
+      id: _nextId++,
+      definition: definition,
+      groupColor: groupColor,
+      children: [],
     );
+
+    if (parentId == null) {
+      _insertBlock(_programBlocks, newBlock, index);
+    } else {
+      _insertIntoParent(_programBlocks, parentId, newBlock, index);
+    }
+
     notifyListeners();
   }
 
   void removeBlock(int id) {
-    _programBlocks.removeWhere((block) => block.id == id);
+    _removeBlock(_programBlocks, id);
     notifyListeners();
   }
 
@@ -130,7 +142,7 @@ class LearningWorkspaceController extends ChangeNotifier {
     }
 
     final generatedSource = _programBlocks
-        .map((block) => block.definition.generatedCode)
+        .map((block) => _buildBlockSource(block))
         .join('\n\n');
 
     final warnings = _buildPlacementWarnings();
@@ -148,29 +160,123 @@ class LearningWorkspaceController extends ChangeNotifier {
 
   List<String> _buildPlacementWarnings() {
     final warnings = <String>[];
-    final hasFunctionBodyBlocks = _programBlocks.any(
-      (block) =>
-          block.definition.placement == LearningBlockPlacement.functionBody,
-    );
-    final hasFunctionContainer = _programBlocks.any(
+    final allBlocks = _flattenBlocks(_programBlocks);
+    final hasFunctionContainer = allBlocks.any(
       (block) =>
           block.definition.kind == LearningBlockKind.setup ||
           block.definition.kind == LearningBlockKind.loop ||
           block.definition.kind == LearningBlockKind.userFunction,
     );
 
-    if (hasFunctionBodyBlocks && !hasFunctionContainer) {
+    warnings.addAll(_buildPlacementWarningsFor(_programBlocks));
+
+    if (warnings.isNotEmpty && !hasFunctionContainer) {
       warnings.add('أضف دالة إعداد أو دالة حلقة حتى تجد الأوامر مكانا مناسبا.');
     }
 
-    for (final block in _programBlocks) {
-      if (block.definition.placement == LearningBlockPlacement.functionBody) {
+    return warnings;
+  }
+
+  List<String> _buildPlacementWarningsFor(
+    List<LearningProgramBlock> blocks, {
+    bool insideContainer = false,
+  }) {
+    final warnings = <String>[];
+
+    for (final block in blocks) {
+      if (block.definition.placement == LearningBlockPlacement.functionBody &&
+          !insideContainer) {
         warnings.add(
           'البلوك "${block.definition.title}" يجب أن يكون داخل دالة مثل إعداد أو حلقة.',
         );
       }
+
+      warnings.addAll(
+        _buildPlacementWarningsFor(
+          block.children,
+          insideContainer: insideContainer || block.definition.acceptsChildren,
+        ),
+      );
     }
 
     return warnings;
+  }
+
+  void _insertBlock(
+    List<LearningProgramBlock> target,
+    LearningProgramBlock block,
+    int? index,
+  ) {
+    final safeIndex = index == null
+        ? target.length
+        : index.clamp(0, target.length);
+    target.insert(safeIndex, block);
+  }
+
+  bool _insertIntoParent(
+    List<LearningProgramBlock> blocks,
+    int parentId,
+    LearningProgramBlock newBlock,
+    int? index,
+  ) {
+    for (final block in blocks) {
+      if (block.id == parentId && block.definition.acceptsChildren) {
+        _insertBlock(block.children, newBlock, index);
+        return true;
+      }
+
+      if (_insertIntoParent(block.children, parentId, newBlock, index)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool _removeBlock(List<LearningProgramBlock> blocks, int id) {
+    final removed = blocks.removeWhere((block) => block.id == id);
+    if (removed > 0) {
+      return true;
+    }
+
+    for (final block in blocks) {
+      if (_removeBlock(block.children, id)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  String _buildBlockSource(LearningProgramBlock block, [int indentLevel = 0]) {
+    if (!block.definition.acceptsChildren) {
+      return _indent(block.definition.generatedCode, indentLevel);
+    }
+
+    final source = block.definition.generatedCode;
+    final openBlock = source.endsWith('\n}')
+        ? source.substring(0, source.length - 2)
+        : source;
+
+    if (block.children.isEmpty) {
+      return _indent('$openBlock\n}', indentLevel);
+    }
+
+    final childrenSource = block.children
+        .map((child) => _buildBlockSource(child, indentLevel + 1))
+        .join('\n');
+
+    return '${_indent(openBlock, indentLevel)}\n$childrenSource\n${_indent('}', indentLevel)}';
+  }
+
+  String _indent(String source, int level) {
+    final prefix = '  ' * level;
+    return source.split('\n').map((line) => '$prefix$line').join('\n');
+  }
+
+  List<LearningProgramBlock> _flattenBlocks(List<LearningProgramBlock> blocks) {
+    return [
+      for (final block in blocks) ...[block, ..._flattenBlocks(block.children)],
+    ];
   }
 }

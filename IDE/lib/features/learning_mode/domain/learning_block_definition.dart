@@ -32,6 +32,7 @@ class LearningBlockDefinition {
     required this.description,
     required this.generatedCode,
     required this.placement,
+    this.acceptsChildren = false,
   });
 
   final LearningBlockKind kind;
@@ -39,6 +40,7 @@ class LearningBlockDefinition {
   final String description;
   final String generatedCode;
   final LearningBlockPlacement placement;
+  final bool acceptsChildren;
 }
 
 class LearningProgramBlock {
@@ -46,9 +48,11 @@ class LearningProgramBlock {
     required this.id,
     required this.definition,
     required this.groupColor,
+    this.children = const [],
   });
 
   final int id;
   final LearningBlockDefinition definition;
   final LearningBlockGroupColor groupColor;
+  final List<LearningProgramBlock> children;
 }
