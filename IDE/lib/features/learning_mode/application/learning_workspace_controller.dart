@@ -16,12 +16,14 @@ class LearningWorkspaceController extends ChangeNotifier {
           title: 'دالة إعداد',
           description: 'مكان أوامر البداية.',
           generatedCode: 'دالة إعداد() : فارغ {\n}',
+          placement: LearningBlockPlacement.topLevel,
         ),
         LearningBlockDefinition(
           kind: LearningBlockKind.loop,
           title: 'دالة حلقة',
           description: 'أوامر تتكرر دائما.',
           generatedCode: 'دالة حلقة() : فارغ {\n}',
+          placement: LearningBlockPlacement.topLevel,
         ),
       ],
     ),
@@ -34,6 +36,7 @@ class LearningWorkspaceController extends ChangeNotifier {
           title: 'متغير رقم',
           description: 'ينشئ متغيرا رقميا بسيطا.',
           generatedCode: 'متغير العدد : صحيح = 0؛',
+          placement: LearningBlockPlacement.topLevel,
         ),
       ],
     ),
@@ -46,12 +49,14 @@ class LearningWorkspaceController extends ChangeNotifier {
           title: 'كتابة نص',
           description: 'استدعاء دالة كتابة متوافق مع قواعد المترجم.',
           generatedCode: 'كتابة_تسلسلية("مرحبا")؛',
+          placement: LearningBlockPlacement.functionBody,
         ),
         LearningBlockDefinition(
           kind: LearningBlockKind.delay,
           title: 'انتظر',
           description: 'ينتظر زمنا بالمللي ثانية.',
           generatedCode: 'تأخير(1000)؛',
+          placement: LearningBlockPlacement.functionBody,
         ),
       ],
     ),
@@ -64,6 +69,7 @@ class LearningWorkspaceController extends ChangeNotifier {
           title: 'إذا',
           description: 'شرط بسيط.',
           generatedCode: 'إذا (العدد > 0) {\n}',
+          placement: LearningBlockPlacement.functionBody,
         ),
       ],
     ),
@@ -76,12 +82,14 @@ class LearningWorkspaceController extends ChangeNotifier {
           title: 'تعريف تابع',
           description: 'ينشئ تابعا جديدا باسم يختاره المستخدم لاحقا.',
           generatedCode: 'دالة تابعي() : فارغ {\n}',
+          placement: LearningBlockPlacement.topLevel,
         ),
         LearningBlockDefinition(
           kind: LearningBlockKind.callUserFunction,
           title: 'استدعاء تابع',
           description: 'يستدعي تابعا أنشأه المستخدم.',
           generatedCode: 'تابعي()؛',
+          placement: LearningBlockPlacement.functionBody,
         ),
       ],
     ),
@@ -92,9 +100,16 @@ class LearningWorkspaceController extends ChangeNotifier {
 
   bool get hasBlocks => _programBlocks.isNotEmpty;
 
-  void addBlock(LearningBlockDefinition definition) {
+  void addBlock(
+    LearningBlockDefinition definition,
+    LearningBlockGroupColor groupColor,
+  ) {
     _programBlocks.add(
-      LearningProgramBlock(id: _nextId++, definition: definition),
+      LearningProgramBlock(
+        id: _nextId++,
+        definition: definition,
+        groupColor: groupColor,
+      ),
     );
     notifyListeners();
   }
@@ -114,8 +129,48 @@ class LearningWorkspaceController extends ChangeNotifier {
       return '// لم تضف أي بلوكات بعد.';
     }
 
-    return _programBlocks
+    final generatedSource = _programBlocks
         .map((block) => block.definition.generatedCode)
         .join('\n\n');
+
+    final warnings = _buildPlacementWarnings();
+    if (warnings.isEmpty) {
+      return generatedSource;
+    }
+
+    return [
+      '// تحذيرات تعليمية',
+      ...warnings.map((warning) => '// $warning'),
+      '',
+      generatedSource,
+    ].join('\n');
+  }
+
+  List<String> _buildPlacementWarnings() {
+    final warnings = <String>[];
+    final hasFunctionBodyBlocks = _programBlocks.any(
+      (block) =>
+          block.definition.placement == LearningBlockPlacement.functionBody,
+    );
+    final hasFunctionContainer = _programBlocks.any(
+      (block) =>
+          block.definition.kind == LearningBlockKind.setup ||
+          block.definition.kind == LearningBlockKind.loop ||
+          block.definition.kind == LearningBlockKind.userFunction,
+    );
+
+    if (hasFunctionBodyBlocks && !hasFunctionContainer) {
+      warnings.add('أضف دالة إعداد أو دالة حلقة حتى تجد الأوامر مكانا مناسبا.');
+    }
+
+    for (final block in _programBlocks) {
+      if (block.definition.placement == LearningBlockPlacement.functionBody) {
+        warnings.add(
+          'البلوك "${block.definition.title}" يجب أن يكون داخل دالة مثل إعداد أو حلقة.',
+        );
+      }
+    }
+
+    return warnings;
   }
 }

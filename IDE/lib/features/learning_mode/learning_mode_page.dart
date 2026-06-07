@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 import 'application/learning_workspace_controller.dart';
 import 'domain/learning_block_definition.dart';
 
+typedef LearningBlockAddCallback =
+    void Function(
+      LearningBlockDefinition block,
+      LearningBlockGroupColor groupColor,
+    );
+
 class LearningModePage extends StatefulWidget {
   const LearningModePage({super.key});
 
@@ -151,7 +157,7 @@ class _BlockPalette extends StatelessWidget {
   const _BlockPalette({required this.groups, required this.onAdd});
 
   final List<LearningBlockGroup> groups;
-  final ValueChanged<LearningBlockDefinition> onAdd;
+  final LearningBlockAddCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +192,7 @@ class _PaletteGroupSection extends StatelessWidget {
   const _PaletteGroupSection({required this.group, required this.onAdd});
 
   final LearningBlockGroup group;
-  final ValueChanged<LearningBlockDefinition> onAdd;
+  final LearningBlockAddCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -218,42 +224,85 @@ class _PaletteGroupSection extends StatelessWidget {
           ...group.blocks.map(
             (block) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _PaletteBlockTile(block: block, onAdd: onAdd),
+              child: _PaletteBlockTile(
+                block: block,
+                groupColor: group.color,
+                onAdd: onAdd,
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
-  Color _colorForGroup(LearningBlockGroupColor color) {
-    return switch (color) {
-      LearningBlockGroupColor.teal => const Color(0xFF0F766E),
-      LearningBlockGroupColor.blue => const Color(0xFF2563EB),
-      LearningBlockGroupColor.amber => const Color(0xFFD97706),
-      LearningBlockGroupColor.rose => const Color(0xFFE11D48),
-      LearningBlockGroupColor.violet => const Color(0xFF7C3AED),
-    };
-  }
 }
 
 class _PaletteBlockTile extends StatelessWidget {
-  const _PaletteBlockTile({required this.block, required this.onAdd});
+  const _PaletteBlockTile({
+    required this.block,
+    required this.groupColor,
+    required this.onAdd,
+  });
 
   final LearningBlockDefinition block;
-  final ValueChanged<LearningBlockDefinition> onAdd;
+  final LearningBlockGroupColor groupColor;
+  final LearningBlockAddCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      tileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      title: Text(block.title),
-      subtitle: Text(block.description),
-      trailing: IconButton(
-        tooltip: 'إضافة',
-        onPressed: () => onAdd(block),
-        icon: const Icon(Icons.add_circle_outline),
+    final color = _colorForGroup(groupColor);
+    final textTheme = Theme.of(context).textTheme;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: _tintForGroup(color),
+        border: Border.all(color: color.withAlpha(96)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(10, 10, 8, 10),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 54,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        block.title,
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      _PlacementBadge(placement: block.placement, color: color),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(block.description, style: textTheme.bodySmall),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filledTonal(
+              tooltip: 'إضافة',
+              onPressed: () => onAdd(block, groupColor),
+              icon: const Icon(Icons.add),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -315,10 +364,36 @@ class _WorkspaceBlockTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = _colorForGroup(block.groupColor);
+
     return ListTile(
-      leading: CircleAvatar(child: Text('${index + 1}')),
+      contentPadding: const EdgeInsetsDirectional.fromSTEB(8, 6, 8, 6),
+      leading: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          '${index + 1}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       title: Text(block.definition.title),
-      subtitle: Text(block.definition.description),
+      subtitle: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(block.definition.description),
+          _PlacementBadge(placement: block.definition.placement, color: color),
+        ],
+      ),
       trailing: IconButton(
         tooltip: 'حذف',
         onPressed: () => onRemove(block.id),
@@ -326,8 +401,58 @@ class _WorkspaceBlockTile extends StatelessWidget {
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        side: BorderSide(color: color.withAlpha(112)),
+      ),
+      tileColor: _tintForGroup(color),
+    );
+  }
+}
+
+class _PlacementBadge extends StatelessWidget {
+  const _PlacementBadge({required this.placement, required this.color});
+
+  final LearningBlockPlacement placement;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withAlpha(28),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withAlpha(96)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        child: Text(
+          _placementLabel(placement),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
     );
   }
+}
+
+String _placementLabel(LearningBlockPlacement placement) {
+  return switch (placement) {
+    LearningBlockPlacement.topLevel => 'مستوى البرنامج',
+    LearningBlockPlacement.functionBody => 'داخل دالة',
+  };
+}
+
+Color _colorForGroup(LearningBlockGroupColor color) {
+  return switch (color) {
+    LearningBlockGroupColor.teal => const Color(0xFF0F766E),
+    LearningBlockGroupColor.blue => const Color(0xFF2563EB),
+    LearningBlockGroupColor.amber => const Color(0xFFD97706),
+    LearningBlockGroupColor.rose => const Color(0xFFE11D48),
+    LearningBlockGroupColor.violet => const Color(0xFF7C3AED),
+  };
+}
+
+Color _tintForGroup(Color color) {
+  return Color.alphaBlend(color.withAlpha(18), Colors.white);
 }

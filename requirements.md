@@ -189,6 +189,14 @@ Current compiler dictionary generation baseline:
 - Statement snippets should be valid inside compiler blocks.
 - Keywords that exist in the lexer but are not accepted by parser statement rules should not be generated as standalone statements.
 
+Current Step 20 learning block styling baseline:
+
+- Each learning block uses the fixed color of its parent group.
+- Palette blocks and workspace blocks have a clearer rounded visual shape.
+- Blocks show whether they belong at program level or inside a function.
+- Optional code preview can include educational placement warnings.
+- Placement warnings do not replace compiler diagnostics and do not add a separate parser.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.
