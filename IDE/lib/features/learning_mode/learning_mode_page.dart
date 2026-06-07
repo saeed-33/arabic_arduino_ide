@@ -153,14 +153,23 @@ class _LearningHeader extends StatelessWidget {
   }
 }
 
-class _BlockPalette extends StatelessWidget {
+class _BlockPalette extends StatefulWidget {
   const _BlockPalette({required this.groups, required this.onAdd});
 
   final List<LearningBlockGroup> groups;
   final LearningBlockAddCallback onAdd;
 
   @override
+  State<_BlockPalette> createState() => _BlockPaletteState();
+}
+
+class _BlockPaletteState extends State<_BlockPalette> {
+  int _selectedGroupIndex = 0;
+
+  @override
   Widget build(BuildContext context) {
+    final selectedGroup = widget.groups[_selectedGroupIndex];
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -173,13 +182,20 @@ class _BlockPalette extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: ListView.builder(
-                itemBuilder: (context, index) {
-                  final group = groups[index];
-                  return _PaletteGroupSection(group: group, onAdd: onAdd);
-                },
-                itemCount: groups.length,
+              child: _PaletteGroupBlocks(
+                group: selectedGroup,
+                onAdd: widget.onAdd,
               ),
+            ),
+            const SizedBox(height: 12),
+            _GroupTabStrip(
+              groups: widget.groups,
+              selectedIndex: _selectedGroupIndex,
+              onSelected: (index) {
+                setState(() {
+                  _selectedGroupIndex = index;
+                });
+              },
             ),
           ],
         ),
@@ -188,48 +204,129 @@ class _BlockPalette extends StatelessWidget {
   }
 }
 
-class _PaletteGroupSection extends StatelessWidget {
-  const _PaletteGroupSection({required this.group, required this.onAdd});
+class _PaletteGroupBlocks extends StatelessWidget {
+  const _PaletteGroupBlocks({required this.group, required this.onAdd});
 
   final LearningBlockGroup group;
   final LearningBlockAddCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 12,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: _colorForGroup(group.color),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  group.title,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ...group.blocks.map(
-            (block) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _PaletteBlockTile(
-                block: block,
-                groupColor: group.color,
-                onAdd: onAdd,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 12,
+              height: 28,
+              decoration: BoxDecoration(
+                color: _colorForGroup(group.color),
+                borderRadius: BorderRadius.circular(999),
               ),
             ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                group.title,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (context, index) {
+              final block = group.blocks[index];
+              return SizedBox(
+                width: 260,
+                child: _PaletteBlockTile(
+                  block: block,
+                  groupColor: group.color,
+                  onAdd: onAdd,
+                ),
+              );
+            },
+            separatorBuilder: (context, index) => const SizedBox(width: 10),
+            itemCount: group.blocks.length,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GroupTabStrip extends StatelessWidget {
+  const _GroupTabStrip({
+    required this.groups,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<LearningBlockGroup> groups;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemBuilder: (context, index) {
+          final group = groups[index];
+          return _GroupTabButton(
+            group: group,
+            isSelected: index == selectedIndex,
+            onPressed: () => onSelected(index),
+          );
+        },
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemCount: groups.length,
+      ),
+    );
+  }
+}
+
+class _GroupTabButton extends StatelessWidget {
+  const _GroupTabButton({
+    required this.group,
+    required this.isSelected,
+    required this.onPressed,
+  });
+
+  final LearningBlockGroup group;
+  final bool isSelected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colorForGroup(group.color);
+    final foregroundColor = isSelected ? Colors.white : color;
+
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        backgroundColor: isSelected ? color : _tintForGroup(color),
+        foregroundColor: foregroundColor,
+        side: BorderSide(color: color.withAlpha(isSelected ? 255 : 112)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isSelected ? Icons.radio_button_checked : Icons.circle_outlined,
+            size: 14,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            group.title,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -331,6 +428,7 @@ class _WorkspacePanel extends StatelessWidget {
               child: blocks.isEmpty
                   ? const Center(child: Text('أضف بلوكا من مكتبة البلوكات.'))
                   : ListView.separated(
+                      scrollDirection: Axis.horizontal,
                       itemBuilder: (context, index) {
                         final block = blocks[index];
                         return _WorkspaceBlockTile(
@@ -340,7 +438,7 @@ class _WorkspacePanel extends StatelessWidget {
                         );
                       },
                       separatorBuilder: (context, index) =>
-                          const SizedBox(height: 8),
+                          const SizedBox(width: 10),
                       itemCount: blocks.length,
                     ),
             ),
@@ -366,44 +464,50 @@ class _WorkspaceBlockTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _colorForGroup(block.groupColor);
 
-    return ListTile(
-      contentPadding: const EdgeInsetsDirectional.fromSTEB(8, 6, 8, 6),
-      leading: Container(
-        width: 40,
-        height: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          '${index + 1}',
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
+    return SizedBox(
+      width: 280,
+      child: ListTile(
+        contentPadding: const EdgeInsetsDirectional.fromSTEB(8, 6, 8, 6),
+        leading: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            '${index + 1}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
+        title: Text(block.definition.title, overflow: TextOverflow.ellipsis),
+        subtitle: Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(block.definition.description),
+            _PlacementBadge(
+              placement: block.definition.placement,
+              color: color,
+            ),
+          ],
+        ),
+        trailing: IconButton(
+          tooltip: 'حذف',
+          onPressed: () => onRemove(block.id),
+          icon: const Icon(Icons.close),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: color.withAlpha(112)),
+        ),
+        tileColor: _tintForGroup(color),
       ),
-      title: Text(block.definition.title),
-      subtitle: Wrap(
-        spacing: 8,
-        runSpacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(block.definition.description),
-          _PlacementBadge(placement: block.definition.placement, color: color),
-        ],
-      ),
-      trailing: IconButton(
-        tooltip: 'حذف',
-        onPressed: () => onRemove(block.id),
-        icon: const Icon(Icons.close),
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: color.withAlpha(112)),
-      ),
-      tileColor: _tintForGroup(color),
     );
   }
 }

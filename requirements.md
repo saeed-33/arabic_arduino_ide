@@ -197,6 +197,14 @@ Current Step 20 learning block styling baseline:
 - Optional code preview can include educational placement warnings.
 - Placement warnings do not replace compiler diagnostics and do not add a separate parser.
 
+Current Step 21 learning tabs baseline:
+
+- Learning Mode shows one block group at a time instead of all groups at once.
+- Group tabs are horizontal and placed at the bottom of the block library.
+- Each group tab uses the fixed color of its group.
+- Blocks inside the selected group are arranged horizontally.
+- Program assembly blocks are arranged horizontally with horizontal scrolling.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.
