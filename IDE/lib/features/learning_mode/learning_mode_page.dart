@@ -47,7 +47,7 @@ class _LearningModePageState extends State<LearningModePage> {
                     SizedBox(
                       width: 300,
                       child: _BlockPalette(
-                        blocks: _controller.palette,
+                        groups: _controller.paletteGroups,
                         onAdd: _controller.addBlock,
                       ),
                     ),
@@ -148,9 +148,9 @@ class _LearningHeader extends StatelessWidget {
 }
 
 class _BlockPalette extends StatelessWidget {
-  const _BlockPalette({required this.blocks, required this.onAdd});
+  const _BlockPalette({required this.groups, required this.onAdd});
 
-  final List<LearningBlockDefinition> blocks;
+  final List<LearningBlockGroup> groups;
   final ValueChanged<LearningBlockDefinition> onAdd;
 
   @override
@@ -167,17 +167,54 @@ class _BlockPalette extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: ListView.separated(
+              child: ListView.builder(
                 itemBuilder: (context, index) {
-                  final block = blocks[index];
-                  return _PaletteBlockTile(block: block, onAdd: onAdd);
+                  final group = groups[index];
+                  return _PaletteGroupSection(group: group, onAdd: onAdd);
                 },
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
-                itemCount: blocks.length,
+                itemCount: groups.length,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PaletteGroupSection extends StatelessWidget {
+  const _PaletteGroupSection({required this.group, required this.onAdd});
+
+  final LearningBlockGroup group;
+  final ValueChanged<LearningBlockDefinition> onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(radius: 14, child: Text('${group.number}')),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  group.title,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...group.blocks.map(
+            (block) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _PaletteBlockTile(block: block, onAdd: onAdd),
+            ),
+          ),
+        ],
       ),
     );
   }

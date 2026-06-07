@@ -6,42 +6,84 @@ class LearningWorkspaceController extends ChangeNotifier {
   final List<LearningProgramBlock> _programBlocks = [];
   int _nextId = 1;
 
-  List<LearningBlockDefinition> get palette => const [
-    LearningBlockDefinition(
-      kind: LearningBlockKind.variable,
-      title: 'متغير رقم',
-      description: 'ينشئ متغيرا رقميا بسيطا.',
-      generatedCode: 'متغير العدد : صحيح = 0؛',
+  List<LearningBlockGroup> get paletteGroups => const [
+    LearningBlockGroup(
+      number: 1,
+      title: 'البداية والتكرار',
+      blocks: [
+        LearningBlockDefinition(
+          kind: LearningBlockKind.setup,
+          title: 'دالة إعداد',
+          description: 'مكان أوامر البداية.',
+          generatedCode: 'دالة إعداد() : فارغ {\n}',
+        ),
+        LearningBlockDefinition(
+          kind: LearningBlockKind.loop,
+          title: 'دالة حلقة',
+          description: 'أوامر تتكرر دائما.',
+          generatedCode: 'دالة حلقة() : فارغ {\n}',
+        ),
+      ],
     ),
-    LearningBlockDefinition(
-      kind: LearningBlockKind.setup,
-      title: 'دالة إعداد',
-      description: 'مكان أوامر البداية.',
-      generatedCode: 'دالة إعداد() : فارغ {\n}',
+    LearningBlockGroup(
+      number: 2,
+      title: 'المتغيرات',
+      blocks: [
+        LearningBlockDefinition(
+          kind: LearningBlockKind.variable,
+          title: 'متغير رقم',
+          description: 'ينشئ متغيرا رقميا بسيطا.',
+          generatedCode: 'متغير العدد : صحيح = 0؛',
+        ),
+      ],
     ),
-    LearningBlockDefinition(
-      kind: LearningBlockKind.loop,
-      title: 'دالة حلقة',
-      description: 'أوامر تتكرر دائما.',
-      generatedCode: 'دالة حلقة() : فارغ {\n}',
+    LearningBlockGroup(
+      number: 3,
+      title: 'الأوامر',
+      blocks: [
+        LearningBlockDefinition(
+          kind: LearningBlockKind.print,
+          title: 'اكتب',
+          description: 'أمر كتابة تجريبي داخل دالة.',
+          generatedCode: 'اكتب("مرحبا")؛',
+        ),
+        LearningBlockDefinition(
+          kind: LearningBlockKind.delay,
+          title: 'انتظر',
+          description: 'ينتظر زمنا بالمللي ثانية.',
+          generatedCode: 'تأخير(1000)؛',
+        ),
+      ],
     ),
-    LearningBlockDefinition(
-      kind: LearningBlockKind.print,
-      title: 'اكتب',
-      description: 'أمر كتابة تجريبي داخل دالة.',
-      generatedCode: 'اكتب("مرحبا")؛',
+    LearningBlockGroup(
+      number: 4,
+      title: 'الشروط',
+      blocks: [
+        LearningBlockDefinition(
+          kind: LearningBlockKind.ifStatement,
+          title: 'إذا',
+          description: 'شرط بسيط.',
+          generatedCode: 'إذا (العدد > 0) {\n}',
+        ),
+      ],
     ),
-    LearningBlockDefinition(
-      kind: LearningBlockKind.delay,
-      title: 'انتظر',
-      description: 'ينتظر زمنا بالمللي ثانية.',
-      generatedCode: 'تأخير(1000)؛',
-    ),
-    LearningBlockDefinition(
-      kind: LearningBlockKind.ifStatement,
-      title: 'إذا',
-      description: 'شرط بسيط.',
-      generatedCode: 'إذا (العدد > 0) {\n}',
+    LearningBlockGroup(
+      number: 5,
+      title: 'توابع المستخدم',
+      blocks: [
+        LearningBlockDefinition(
+          kind: LearningBlockKind.userFunction,
+          title: 'تعريف تابع',
+          description: 'ينشئ تابعا جديدا باسم يختاره المستخدم لاحقا.',
+          generatedCode: 'دالة تابعي() : فارغ {\n}',
+        ),
+        LearningBlockDefinition(
+          kind: LearningBlockKind.callUserFunction,
+          title: 'استدعاء تابع',
+          description: 'يستدعي تابعا أنشأه المستخدم.',
+          generatedCode: 'تابعي()؛',
+        ),
+      ],
     ),
   ];
 

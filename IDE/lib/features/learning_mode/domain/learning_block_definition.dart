@@ -1,4 +1,25 @@
-enum LearningBlockKind { variable, setup, loop, print, delay, ifStatement }
+enum LearningBlockKind {
+  variable,
+  setup,
+  loop,
+  print,
+  delay,
+  ifStatement,
+  userFunction,
+  callUserFunction,
+}
+
+class LearningBlockGroup {
+  const LearningBlockGroup({
+    required this.number,
+    required this.title,
+    required this.blocks,
+  });
+
+  final int number;
+  final String title;
+  final List<LearningBlockDefinition> blocks;
+}
 
 class LearningBlockDefinition {
   const LearningBlockDefinition({

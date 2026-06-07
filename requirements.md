@@ -165,6 +165,18 @@ Current Step 16 learning mode shell baseline:
 - No drag/drop yet.
 - No compiler analysis from Learning Mode yet.
 
+Current Step 17 learning block groups baseline:
+
+- Learning block palette is split into numbered groups.
+- Current groups are:
+  - 1: start and loop
+  - 2: variables
+  - 3: commands
+  - 4: conditions
+  - 5: user functions
+- User functions group exists with define/call function placeholders.
+- Preview remains optional and is not shown permanently.
+
 ## Libraries
 
 The IDE should later support adding libraries from a server. The server and protocol will be designed in a later step.
