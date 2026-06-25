@@ -134,7 +134,7 @@ class ProModeCompilerAdapter {
     final exitCode = await process.exitCode;
     if (exitCode != 0) {
       throw FileSystemException(
-        'Failed to list Arduino ports.',
+        'فشل في فحص منافذ Arduino.',
         compilerDir.path,
       );
     }
@@ -181,7 +181,7 @@ class ProModeCompilerAdapter {
     required void Function() onDone,
   }) async {
     if (_serialProcess != null) {
-      throw StateError('Serial port already open');
+      throw StateError('منفذ السيريال مفتوح بالفعل.');
     }
 
     final compilerDir = await _findCompilerDirectory();

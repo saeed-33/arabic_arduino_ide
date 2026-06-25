@@ -38,7 +38,7 @@ class ArduinoArabicCompilerDiagnosticsAdapter
     if (compilerDirectory == null) {
       return _failureSnapshot(
         code: 'COMPILER_SOURCE_NOT_FOUND',
-        message: 'Compiler source folder was not found.',
+        message: 'لم يُعثر على مجلد مصدر المترجم.',
         context: compilerSourcePath,
       );
     }
@@ -50,7 +50,7 @@ class ArduinoArabicCompilerDiagnosticsAdapter
       return _failureSnapshot(
         code: 'COMPILER_RUNTIME_NOT_READY',
         message:
-            'Compiler runtime is not ready. Run: ${runtimeStatus.setupCommand}',
+            'بيئة تشغيل المترجم غير جاهزة. نفّذ: ${runtimeStatus.setupCommand}',
         context: compilerSourcePath,
       );
     }
@@ -59,7 +59,7 @@ class ArduinoArabicCompilerDiagnosticsAdapter
     if (!runner.existsSync()) {
       return _failureSnapshot(
         code: 'COMPILER_RUNNER_NOT_FOUND',
-        message: 'run_diagnostics.py was not found.',
+        message: 'لم يُعثر على run_diagnostics.py.',
         context: runner.path,
       );
     }
@@ -84,7 +84,7 @@ class ArduinoArabicCompilerDiagnosticsAdapter
         return _failureSnapshot(
           code: 'COMPILER_NO_OUTPUT',
           message: result.stderr.toString().trim().isEmpty
-              ? 'Compiler runner produced no JSON output.'
+              ? 'لم يُخرج مشغّل المترجم أي بيانات JSON.'
               : result.stderr.toString().trim(),
           context: compilerDirectory.path,
         );
