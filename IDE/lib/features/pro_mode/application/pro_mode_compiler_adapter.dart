@@ -12,10 +12,18 @@ class CompilerNotFoundException implements Exception {
 }
 
 class ProModeCompilerAdapter {
-  const ProModeCompilerAdapter();
+  // لم يعد const: المحول الآن يحتفظ بحالة عملية السيريال.
+  ProModeCompilerAdapter();
+
+  // ── حالة السيريال مونيتور ────────────────────────────────────
+  Process? _serialProcess;
+  StreamSubscription<String>? _serialStdoutSub;
+  StreamSubscription<String>? _serialStderrSub;
+
+  bool get isSerialPortOpen => _serialProcess != null;
 
   Future<Directory> _findCompilerDirectory() async {
-    final candidates = <String>[
+    final candidates = [
       '../arduino_arabic_compiler/ArduinoArabicCompiler',
       'arduino_arabic_compiler/ArduinoArabicCompiler',
       '../ArduinoArabicCompiler',
@@ -40,6 +48,7 @@ class ProModeCompilerAdapter {
       '${compilerDirectory.path}${Platform.pathSeparator}.venv${Platform.pathSeparator}Scripts${Platform.pathSeparator}python.exe',
     );
     if (venv.existsSync()) {
+      print(venv.path);
       return venv.path;
     }
 
@@ -47,10 +56,10 @@ class ProModeCompilerAdapter {
   }
 
   Future<Process> startCompilerProcess(
-    String source,
-    void Function(String line) onStdout,
-    void Function(String line) onStderr,
-  ) async {
+      String source,
+      void Function(String line) onStdout,
+      void Function(String line) onStderr,
+      ) async {
     final compilerDir = await _findCompilerDirectory();
     final python = _pythonExecutable(compilerDir);
     final testFile = File(
@@ -92,9 +101,9 @@ class ProModeCompilerAdapter {
   }
 
   Future<List<String>> listAvailablePorts(
-    void Function(String line) onStdout,
-    void Function(String line) onStderr,
-  ) async {
+      void Function(String line) onStdout,
+      void Function(String line) onStderr,
+      ) async {
     final compilerDir = await _findCompilerDirectory();
     final python = _pythonExecutable(compilerDir);
     final ports = <String>{};
@@ -112,11 +121,11 @@ class ProModeCompilerAdapter {
         .transform(utf8.decoder)
         .transform(const LineSplitter())
         .listen((line) {
-          onStdout(line);
-          for (final match in portPattern.allMatches(line)) {
-            ports.add(match.group(0)!);
-          }
-        });
+      onStdout(line);
+      for (final match in portPattern.allMatches(line)) {
+        ports.add(match.group(0)!);
+      }
+    });
     process.stderr
         .transform(utf8.decoder)
         .transform(const LineSplitter())
@@ -134,10 +143,10 @@ class ProModeCompilerAdapter {
   }
 
   Future<Process> flashFirmware(
-    String port,
-    void Function(String line) onStdout,
-    void Function(String line) onStderr,
-  ) async {
+      String port,
+      void Function(String line) onStdout,
+      void Function(String line) onStderr,
+      ) async {
     final compilerDir = await _findCompilerDirectory();
     final python = _pythonExecutable(compilerDir);
     final process = await Process.start(
@@ -158,5 +167,75 @@ class ProModeCompilerAdapter {
         .listen(onStderr);
 
     return process;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // السيريال مونيتور — يشغّل: python build.py monitor <port> <baud>
+  // ══════════════════════════════════════════════════════════════
+
+  Future<void> openSerialPort({
+    required String port,
+    required int baudRate,
+    required void Function(String data) onData,
+    required void Function(Object error) onError,
+    required void Function() onDone,
+  }) async {
+    if (_serialProcess != null) {
+      throw StateError('Serial port already open');
+    }
+
+    final compilerDir = await _findCompilerDirectory();
+    final python = _pythonExecutable(compilerDir);
+
+    final process = await Process.start(
+      python,
+      ['build.py', 'monitor', port, '$baudRate'],
+      workingDirectory: compilerDir.path,
+      environment: {'PYTHONIOENCODING': 'utf-8'},
+      runInShell: false,
+    );
+
+    _serialProcess = process;
+
+    // RX: كل سطر يطبعه `سيريال_اطبع` (Serial.println) ينتهي بـ \r\n،
+    // لذا LineSplitter يعطي سطراً نظيفاً لكل قيمة. و utf8.decoder يجمع
+    // أحرف العربية متعددة البايت المقسّمة بين قراءتين.
+    _serialStdoutSub = process.stdout
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .listen(onData, onError: onError);
+
+    // stderr يصل كأسطر كاملة من بايثون (رسائل الأخطاء).
+    _serialStderrSub = process.stderr
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .listen((line) => onError(line));
+
+    process.exitCode.then((_) {
+      _serialProcess = null;
+      onDone();
+    });
+  }
+
+  /// يرسل سطراً إلى اللوحة (مُنهى بسطر جديد) بترميز UTF-8.
+  void writeToSerialPort(String message) {
+    final process = _serialProcess;
+    if (process == null) return;
+    process.stdin.add(utf8.encode('$message\n'));
+  }
+
+  /// يغلق عملية المونيتور ويحرّر المنفذ.
+  void closeSerialPort() {
+    _serialStdoutSub?.cancel();
+    _serialStderrSub?.cancel();
+    _serialStdoutSub = null;
+    _serialStderrSub = null;
+
+    final process = _serialProcess;
+    _serialProcess = null;
+    if (process != null) {
+      process.stdin.close(); // يُشير لمونيتور بايثون بالخروج بنظافة
+      process.kill();
+    }
   }
 }

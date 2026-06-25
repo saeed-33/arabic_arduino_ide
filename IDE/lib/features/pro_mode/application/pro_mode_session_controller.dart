@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -25,8 +24,8 @@ class ProModeSessionController extends ChangeNotifier {
     ProModeCompilerAdapter? compilerAdapter,
     SettingsController? settingsController,
     AppPersistence? persistence,
-  }) : _fileService = fileService ?? ProModeFileService(),
-        _compilerAdapter = compilerAdapter ?? const ProModeCompilerAdapter(),
+  })  : _fileService = fileService ?? ProModeFileService(),
+        _compilerAdapter = compilerAdapter ?? ProModeCompilerAdapter(),
         _settingsController =
             settingsController ?? SettingsController(persistence: persistence),
         _persistence = persistence {
@@ -47,10 +46,10 @@ class ProModeSessionController extends ChangeNotifier {
 نهاية
 ''';
 
-  final ProModeFileService      _fileService;
-  final ProModeCompilerAdapter  _compilerAdapter;
-  final SettingsController      _settingsController;
-  final TextEditingController   editorController =
+  final ProModeFileService _fileService;
+  final ProModeCompilerAdapter _compilerAdapter;
+  final SettingsController _settingsController;
+  final TextEditingController editorController =
   TextEditingController(text: initialCode);
 
   // ── سجل التنفيذ ──────────────────────────────────────────────
@@ -58,51 +57,50 @@ class ProModeSessionController extends ChangeNotifier {
 
   // ── حالة الملف ───────────────────────────────────────────────
   String? _currentFilePath;
-  String  _lastSavedText      = initialCode;
-  bool    _hasUnsavedChanges  = false;
+  String _lastSavedText = initialCode;
+  bool _hasUnsavedChanges = false;
 
   // ── حالة التنفيذ ─────────────────────────────────────────────
-  String                _statusMessage  = 'جاهز.';
-  Process?              _compilerProcess;
-  AppPersistence?       _persistence;
+  String _statusMessage = 'جاهز.';
+  Process? _compilerProcess;
+  AppPersistence? _persistence;
   ProModeExecutionState _executionState = ProModeExecutionState.idle;
 
   // ── المنافذ ───────────────────────────────────────────────────
-  List<String> _availablePorts    = [];
-  String?      _selectedPort;
-  bool         _isRefreshingPorts = false;
-  bool         _isFlashing        = false;
+  List<String> _availablePorts = [];
+  String? _selectedPort;
+  bool _isRefreshingPorts = false;
+  bool _isFlashing = false;
 
   // ── السيريال مونيتور ──────────────────────────────────────────
-  final List<SerialLogEntry> _serialLog    = [];
-  bool                       _isSerialOpen = false;
-  int                        _baudRate     = 9600;
-  StreamSubscription<String>? _serialSub;
+  final List<SerialLogEntry> _serialLog = [];
+  bool _isSerialOpen = false;
+  int _baudRate = 9600;
 
   // ══════════════════════════════════════════════════════════════
-  //  Getters
+  // Getters
   // ══════════════════════════════════════════════════════════════
 
-  List<ProModeLogEntry>  get logs             => List.unmodifiable(_logs);
-  bool                   get hasUnsavedChanges => _hasUnsavedChanges;
-  String                 get statusMessage     => _statusMessage;
-  ProModeExecutionState  get executionState    => _executionState;
-  List<String>           get availablePorts    => List.unmodifiable(_availablePorts);
-  bool                   get isRefreshingPorts => _isRefreshingPorts;
-  bool                   get isFlashing        => _isFlashing;
-  bool                   get isRunning         => _compilerProcess != null;
+  List<ProModeLogEntry> get logs => List.unmodifiable(_logs);
+  bool get hasUnsavedChanges => _hasUnsavedChanges;
+  String get statusMessage => _statusMessage;
+  ProModeExecutionState get executionState => _executionState;
+  List<String> get availablePorts => List.unmodifiable(_availablePorts);
+  bool get isRefreshingPorts => _isRefreshingPorts;
+  bool get isFlashing => _isFlashing;
+  bool get isRunning => _compilerProcess != null;
 
   // السيريال
-  bool                   get isSerialOpen => _isSerialOpen;
-  List<SerialLogEntry>   get serialLog    => List.unmodifiable(_serialLog);
+  bool get isSerialOpen => _isSerialOpen;
+  List<SerialLogEntry> get serialLog => List.unmodifiable(_serialLog);
 
   String get executionStateLabel => switch (_executionState) {
-    ProModeExecutionState.idle      => 'خامل',
-    ProModeExecutionState.running   => 'تشغيل',
+    ProModeExecutionState.idle => 'خامل',
+    ProModeExecutionState.running => 'تشغيل',
     ProModeExecutionState.uploading => 'رفع',
-    ProModeExecutionState.success   => 'نجاح',
-    ProModeExecutionState.failed    => 'فشل',
-    ProModeExecutionState.stopped   => 'تم الإيقاف',
+    ProModeExecutionState.success => 'نجاح',
+    ProModeExecutionState.failed => 'فشل',
+    ProModeExecutionState.stopped => 'تم الإيقاف',
   };
 
   String? get selectedPort {
@@ -123,7 +121,7 @@ class ProModeSessionController extends ChangeNotifier {
   }
 
   // ══════════════════════════════════════════════════════════════
-  //  السيريال مونيتور
+  // السيريال مونيتور
   // ══════════════════════════════════════════════════════════════
 
   /// يفتح اتصال السيريال على المنفذ المحدد بالـ baud rate المطلوب.
@@ -139,20 +137,18 @@ class ProModeSessionController extends ChangeNotifier {
       return;
     }
 
-    _baudRate     = baudRate;
+    _baudRate = baudRate;
     _isSerialOpen = true;
     notifyListeners();
 
     _setStatus('تم فتح السيريال على $port بـ $baudRate baud.', ProModeLogLevel.success);
 
-    // ── الاتصال الحقيقي بالسيريال ────────────────────────────
-    // يستخدم flutter_libserialport أو flutter_serial_port حسب ما هو متاح.
-    // المثال أدناه يُظهر الهيكل — استبدله بمكتبة السيريال التي تستخدمها.
+    // ── الاتصال الحقيقي عبر: python build.py monitor <port> <baud> ──
     try {
       await _compilerAdapter.openSerialPort(
-        port:     port,
+        port: port,
         baudRate: baudRate,
-        onData:   (line) {
+        onData: (line) {
           _serialLog.add(SerialLogEntry.received(line));
           notifyListeners();
         },
@@ -208,12 +204,12 @@ class ProModeSessionController extends ChangeNotifier {
   }
 
   // ══════════════════════════════════════════════════════════════
-  //  الملفات
+  // الملفات
   // ══════════════════════════════════════════════════════════════
 
   Future<void> createNewFile() async {
-    _currentFilePath   = null;
-    _lastSavedText     = '';
+    _currentFilePath = null;
+    _lastSavedText = '';
     _hasUnsavedChanges = false;
     _setEditorText('');
     _setStatus('تم إنشاء ملف جديد.', ProModeLogLevel.info);
@@ -246,7 +242,7 @@ class ProModeSessionController extends ChangeNotifier {
   Future<void> saveFile() async {
     try {
       final savedPath = await _fileService.saveCodeFile(
-        content:     editorController.text,
+        content: editorController.text,
         currentPath: _currentFilePath,
       );
       if (savedPath == null) {
@@ -270,7 +266,7 @@ class ProModeSessionController extends ChangeNotifier {
   }
 
   // ══════════════════════════════════════════════════════════════
-  //  التنفيذ
+  // التنفيذ
   // ══════════════════════════════════════════════════════════════
 
   Future<void> runProgram() async {
@@ -336,7 +332,7 @@ class ProModeSessionController extends ChangeNotifier {
   }
 
   // ══════════════════════════════════════════════════════════════
-  //  المنافذ
+  // المنافذ
   // ══════════════════════════════════════════════════════════════
 
   Future<void> refreshAvailablePorts() async {
@@ -394,7 +390,12 @@ class ProModeSessionController extends ChangeNotifier {
       return;
     }
 
-    _isFlashing     = true;
+    // avrdude يحتاج المنفذ حصرياً: أغلق السيريال مونيتور قبل الرفع
+    // ثم أعد فتحه بعده (تماماً كما يفعل Arduino IDE الرسمي).
+    final bool reopenSerialAfterFlash = _isSerialOpen;
+    if (_isSerialOpen) closeSerial();
+
+    _isFlashing = true;
     _executionState = ProModeExecutionState.uploading;
     _setStatus('جاري التجميع...', ProModeLogLevel.info);
     notifyListeners();
@@ -416,7 +417,7 @@ class ProModeSessionController extends ChangeNotifier {
       }
 
       _setStatus('جاري الرفع إلى $_selectedPort...', ProModeLogLevel.info);
-      final flash     = await _compilerAdapter.flashFirmware(
+      final flash = await _compilerAdapter.flashFirmware(
         _selectedPort!,
         _handleCompilerStdout,
         _handleCompilerStderr,
@@ -438,6 +439,10 @@ class ProModeSessionController extends ChangeNotifier {
     } finally {
       _isFlashing = false;
       notifyListeners();
+      // أعد فتح المونيتور إن كان مفتوحاً قبل الرفع (يلتقط رسائل اعداد()).
+      if (reopenSerialAfterFlash) {
+        await openSerial(_baudRate);
+      }
     }
   }
 
@@ -447,7 +452,7 @@ class ProModeSessionController extends ChangeNotifier {
   }
 
   // ══════════════════════════════════════════════════════════════
-  //  dispose
+  // dispose
   // ══════════════════════════════════════════════════════════════
 
   @override
@@ -460,7 +465,7 @@ class ProModeSessionController extends ChangeNotifier {
   }
 
   // ══════════════════════════════════════════════════════════════
-  //  helpers خاصة
+  // helpers خاصة
   // ══════════════════════════════════════════════════════════════
 
   void _handleCodeChanged() {
@@ -471,13 +476,13 @@ class ProModeSessionController extends ChangeNotifier {
   }
 
   void _markSaved(String path) {
-    _currentFilePath   = path;
-    _lastSavedText     = editorController.text;
+    _currentFilePath = path;
+    _lastSavedText = editorController.text;
     _hasUnsavedChanges = false;
   }
 
   void _setEditorText(String text) {
-    editorController.text      = text;
+    editorController.text = text;
     editorController.selection = TextSelection.collapsed(offset: text.length);
   }
 
@@ -494,8 +499,8 @@ class ProModeSessionController extends ChangeNotifier {
   void _addLog(String message, ProModeLogLevel level) {
     _logs.add(
       ProModeLogEntry(
-        message:   message,
-        level:     level,
+        message: message,
+        level: level,
         createdAt: DateTime.now(),
       ),
     );

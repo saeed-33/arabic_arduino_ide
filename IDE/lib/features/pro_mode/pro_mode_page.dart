@@ -33,13 +33,12 @@ const _kLineNumberWidth  = 52.0;
 //  ألوان الـ Syntax Highlighting
 // ═══════════════════════════════════════════════════════════════
 class _SyntaxColors {
-  static const keyword  = Color(0xFF569CD6);
-  static const type     = Color(0xFF4EC9B0);
-  static const string   = Color(0xFFCE9178);
-  static const comment  = Color(0xFF6A9955);
-  static const number   = Color(0xFFB5CEA8);
+  static const keyword = Color(0xFF569CD6);
+  static const type = Color(0xFF4EC9B0);
+  static const string = Color(0xFFCE9178);
+  static const comment = Color(0xFF6A9955);
+  static const number = Color(0xFFB5CEA8);
   static const annotate = Color(0xFF9CDCFE);
-  // المعرّفات العربية — لون دافئ مميّز عن النص العادي
   static const arabicId = Color(0xFFDCDCAA);
 }
 
@@ -1208,181 +1207,230 @@ class _SerialMonitorPanelState extends State<_SerialMonitorPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final cs      = Theme.of(context).colorScheme;
-    final sc      = widget.controller;
+    final cs = Theme.of(context).colorScheme;
+    final sc = widget.controller;
     final entries = sc.serialLog;
-    final isOpen  = sc.isSerialOpen;
+    final isOpen = sc.isSerialOpen;
+
+    const bgColor = Color(0xFFF8FAFC);
+    const toolbarColor = Color(0xFFEFF3F8);
 
     return ColoredBox(
-      color: const Color(0xFF1E1E1E),
+      color: bgColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
 
-          // ── شريط الإعدادات ────────────────────────────────────
+          // Toolbar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            color: const Color(0xFF2D2D2D),
+            color: toolbarColor,
             child: Row(
               children: [
-                const Text('Baud Rate:',
-                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const Text(
+                  'Baud Rate:',
+                  style: TextStyle(
+                    color: Color(0xFF374151),
+                    fontSize: 12,
+                  ),
+                ),
                 const SizedBox(width: 8),
+
                 DropdownButton<int>(
-                  value:         _baudRate,
-                  dropdownColor: const Color(0xFF2D2D2D),
-                  style:         const TextStyle(color: Colors.white, fontSize: 12),
-                  underline:     const SizedBox(),
-                  isDense:       true,
-                  items: _baudRates.map((r) =>
-                      DropdownMenuItem(value: r, child: Text('$r'))).toList(),
+                  value: _baudRate,
+                  underline: const SizedBox(),
+                  isDense: true,
+                  dropdownColor: Colors.white,
+                  style: const TextStyle(
+                    color: Color(0xFF374151),
+                    fontSize: 12,
+                  ),
+                  items: _baudRates
+                      .map(
+                        (r) => DropdownMenuItem(
+                      value: r,
+                      child: Text('$r'),
+                    ),
+                  )
+                      .toList(),
                   onChanged: (v) {
                     if (v == null) return;
+
                     setState(() => _baudRate = v);
                     widget.controller.setSerialBaudRate(v);
                   },
                 ),
+
                 const SizedBox(width: 16),
-                // فتح / إغلاق
+
                 TextButton.icon(
                   onPressed: isOpen
                       ? widget.controller.closeSerial
                       : () => widget.controller.openSerial(_baudRate),
                   icon: Icon(
-                    isOpen ? Icons.stop_circle_outlined : Icons.play_circle_outline,
+                    isOpen
+                        ? Icons.stop_circle_outlined
+                        : Icons.play_circle_outline,
                     size: 16,
-                    color: isOpen ? Colors.redAccent : Colors.greenAccent,
+                    color: isOpen
+                        ? Colors.red.shade300
+                        : Colors.green.shade400,
                   ),
                   label: Text(
                     isOpen ? 'إغلاق' : 'فتح',
                     style: TextStyle(
-                      color:    isOpen ? Colors.redAccent : Colors.greenAccent,
+                      color: isOpen
+                          ? Colors.red.shade300
+                          : Colors.green.shade400,
                       fontSize: 12,
                     ),
                   ),
                 ),
+
                 const Spacer(),
-                // Auto-scroll
-                const Text('تمرير تلقائي',
-                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+
+                const Text(
+                  'تمرير تلقائي',
+                  style: TextStyle(
+                    color: Color(0xFF374151),
+                    fontSize: 12,
+                  ),
+                ),
+
                 const SizedBox(width: 4),
+
                 Transform.scale(
                   scale: 0.8,
                   child: Switch(
-                    value:     _autoScroll,
+                    value: _autoScroll,
                     onChanged: (v) => setState(() => _autoScroll = v),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    materialTapTargetSize:
+                    MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
-                const SizedBox(width: 4),
+
                 IconButton(
-                  tooltip:   'مسح',
+                  tooltip: 'مسح',
                   onPressed: widget.controller.clearSerialLog,
-                  icon: const Icon(Icons.clear_all, size: 18, color: Colors.white54),
+                  icon: const Icon(
+                    Icons.clear_all,
+                    size: 18,
+                    color: Color(0xFF6B7280),
+                  ),
                 ),
               ],
             ),
           ),
 
-          // ── منطقة العرض ──────────────────────────────────────
+          // Output
           Expanded(
             child: entries.isEmpty
                 ? Center(
               child: Text(
-                isOpen ? 'في انتظار البيانات...' : 'افتح المنفذ للبدء',
-                style: const TextStyle(color: Colors.white38),
+                isOpen
+                    ? 'في انتظار البيانات...'
+                    : 'افتح المنفذ للبدء',
+                style: const TextStyle(
+                  color: Color(0xFF9CA3AF),
+                ),
               ),
             )
                 : ListView.builder(
               controller: _scrollController,
-              padding:    const EdgeInsets.all(12),
-              itemCount:  entries.length,
+              padding: const EdgeInsets.all(12),
+              itemCount: entries.length,
               itemBuilder: (_, i) {
                 final e = entries[i];
+
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
+                  padding: const EdgeInsets.only(bottom: 4),
                   child: RichText(
                     textDirection: TextDirection.ltr,
-                    text: TextSpan(children: [
-                      TextSpan(
-                        text: '[${e.timestamp}] ',
-                        style: const TextStyle(
-                          color: Color(0xFF569CD6),
-                          fontSize: 12,
-                          fontFamily: 'Cascadia Code',
+                    text: TextSpan(
+                      children: [
+
+                        // Timestamp
+                        TextSpan(
+                          text: '[${e.timestamp}] ',
+                          style: const TextStyle(
+                            color: Color(0xFF8EC5FF),
+                            fontSize: 12,
+                            fontFamily: 'Cascadia Code',
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text: e.data,
-                        style: TextStyle(
-                          color: e.isSent
-                              ? const Color(0xFF4EC9B0)
-                              : Colors.white87,
-                          fontSize: 13,
-                          fontFamily: 'Cascadia Code',
-                        ),
-                      ),
-                      if (e.isSent)
-                        const TextSpan(
-                          text: '  ←',
+
+                        // Data
+                        TextSpan(
+                          text: e.data,
                           style: TextStyle(
-                              color: Color(0xFF4EC9B0), fontSize: 11),
+                            color: e.isSent
+                                ? const Color(0xFF9BE7D8)
+                                : const Color(0xFF374151),
+                            fontSize: 13,
+                            fontFamily: 'Cascadia Code',
+                          ),
                         ),
-                    ]),
+
+                        if (e.isSent)
+                          const TextSpan(
+                            text: '  ←',
+                            style: TextStyle(
+                              color: Color(0xFF9BE7D8),
+                              fontSize: 11,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
           ),
 
-          // ── صندوق الإرسال ─────────────────────────────────────
+          // Input Area
           Container(
             padding: const EdgeInsets.all(8),
-            color: const Color(0xFF2D2D2D),
+            color: toolbarColor,
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
-                    controller:    _inputController,
-                    enabled:       isOpen,
+                    controller: _inputController,
+                    enabled: isOpen,
                     textDirection: TextDirection.rtl,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF374151),
                       fontSize: 13,
                       fontFamily: 'Cascadia Code',
                     ),
                     decoration: InputDecoration(
-                      hintText:  isOpen
+                      hintText: isOpen
                           ? 'اكتب رسالة للإرسال...'
                           : 'افتح المنفذ أولاً',
                       hintStyle: const TextStyle(
-                          color: Colors.white38, fontSize: 12),
+                        color: Color(0xFF9CA3AF),
+                        fontSize: 12,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding:
+                      const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(6),
-                        borderSide:
-                        const BorderSide(color: Color(0xFF444444)),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide:
-                        const BorderSide(color: Color(0xFF444444)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: BorderSide(color: cs.primary),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      filled:    true,
-                      fillColor: const Color(0xFF1E1E1E),
                     ),
                     onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
+
                 const SizedBox(width: 8),
+
                 FilledButton.icon(
                   onPressed: isOpen ? _sendMessage : null,
-                  icon:  const Icon(Icons.send, size: 16),
+                  icon: const Icon(Icons.send, size: 16),
                   label: const Text('إرسال'),
                 ),
               ],
