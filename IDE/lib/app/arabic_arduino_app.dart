@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'app_persistence.dart';
 import 'app_theme.dart';
 import 'home_shell.dart';
 
 class ArabicArduinoApp extends StatelessWidget {
-  const ArabicArduinoApp({super.key});
+  const ArabicArduinoApp({super.key, required this.persistence});
+
+  final AppPersistence persistence;
 
   @override
   Widget build(BuildContext context) {
@@ -12,9 +15,9 @@ class ArabicArduinoApp extends StatelessWidget {
       title: 'بيئة أردوينو العربية',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
-      home: const Directionality(
+      home: Directionality(
         textDirection: TextDirection.rtl,
-        child: HomeShell(),
+        child: HomeShell(persistence: persistence),
       ),
     );
   }

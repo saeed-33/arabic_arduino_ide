@@ -5,12 +5,15 @@ import '../features/help/help_page.dart';
 import '../features/kids_mode/kids_mode_page.dart';
 import '../features/pro_mode/application/pro_mode_session_controller.dart';
 import '../features/pro_mode/pro_mode_page.dart';
+import '../features/settings/application/settings_controller.dart';
 import '../features/settings/settings_page.dart';
+import 'app_persistence.dart';
 
 enum AppSection { proMode, kidsMode, developerMode, help, settings }
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  const HomeShell({super.key, required this.persistence});
+  final AppPersistence persistence;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -18,12 +21,18 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   AppSection _section = AppSection.proMode;
+
+  late final SettingsController _settingsController;
   late final ProModeSessionController _proModeSessionController;
 
   @override
   void initState() {
     super.initState();
-    _proModeSessionController = ProModeSessionController();
+    _settingsController = SettingsController(persistence: widget.persistence);
+    _proModeSessionController = ProModeSessionController(
+      settingsController: _settingsController,
+      persistence: widget.persistence,
+    );
   }
 
   @override
@@ -32,134 +41,66 @@ class _HomeShellState extends State<HomeShell> {
     super.dispose();
   }
 
+  int get _selectedIndex => AppSection.values.indexOf(_section);
+
+  void _onSelect(int index) {
+    setState(() => _section = AppSection.values[index]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('بيئة أردوينو العربية'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: _SectionNavBar(
-            selectedSection: _section,
-            onSelected: (section) => setState(() => _section = section),
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'المساعدة',
-            onPressed: () => setState(() => _section = AppSection.help),
-            icon: const Icon(Icons.help_outline),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
-      body: _buildSection(),
-    );
-  }
-
-  Widget _buildSection() {
-    return switch (_section) {
-      AppSection.proMode => ProModePage(controller: _proModeSessionController),
-      AppSection.kidsMode => const KidsModePage(),
-      AppSection.developerMode => DeveloperModePage(
-        sourceProvider: () => _proModeSessionController.editorController.text,
-      ),
-      AppSection.help => const HelpPage(),
-      AppSection.settings => const SettingsPage(),
-    };
-  }
-}
-
-class _SectionNavBar extends StatelessWidget {
-  const _SectionNavBar({
-    required this.selectedSection,
-    required this.onSelected,
-  });
-
-  final AppSection selectedSection;
-  final ValueChanged<AppSection> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      body: Row(
         children: [
-          _SectionNavButton(
-            section: AppSection.proMode,
-            selectedSection: selectedSection,
-            icon: Icons.code,
-            label: 'المحترف',
-            onSelected: onSelected,
+          NavigationRail(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _onSelect,
+            labelType: NavigationRailLabelType.all,
+            groupAlignment: -0.9,
+            destinations: const [
+              NavigationRailDestination(
+                icon: Icon(Icons.code),
+                label: Text('المحترف'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.extension),
+                label: Text('التعلم'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.developer_mode),
+                label: Text('المطور'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.help_outline),
+                label: Text('مساعدة'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.settings_outlined),
+                label: Text('إعدادات'),
+              ),
+            ],
           ),
-          _SectionNavButton(
-            section: AppSection.kidsMode,
-            selectedSection: selectedSection,
-            icon: Icons.extension,
-            label: 'التعلم',
-            onSelected: onSelected,
-          ),
-          _SectionNavButton(
-            section: AppSection.developerMode,
-            selectedSection: selectedSection,
-            icon: Icons.developer_mode,
-            label: 'المطور',
-            onSelected: onSelected,
-          ),
-          _SectionNavButton(
-            section: AppSection.help,
-            selectedSection: selectedSection,
-            icon: Icons.help_outline,
-            label: 'مساعدة',
-            onSelected: onSelected,
-          ),
-          _SectionNavButton(
-            section: AppSection.settings,
-            selectedSection: selectedSection,
-            icon: Icons.settings_outlined,
-            label: 'إعدادات',
-            onSelected: onSelected,
+          const VerticalDivider(width: 1),
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                ProModePage(controller: _proModeSessionController),
+                const KidsModePage(),
+                DeveloperModePage(
+                  sourceProvider: () =>
+                  _proModeSessionController.editorController.text,
+                ),
+                const HelpPage(),
+                SettingsPage(controller: _settingsController),
+              ],
+            ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SectionNavButton extends StatelessWidget {
-  const _SectionNavButton({
-    required this.section,
-    required this.selectedSection,
-    required this.icon,
-    required this.label,
-    required this.onSelected,
-  });
-
-  final AppSection section;
-  final AppSection selectedSection;
-  final IconData icon;
-  final String label;
-  final ValueChanged<AppSection> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final isSelected = section == selectedSection;
-
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(start: 8),
-      child: isSelected
-          ? FilledButton.icon(
-              onPressed: () => onSelected(section),
-              icon: Icon(icon),
-              label: Text(label),
-            )
-          : OutlinedButton.icon(
-              onPressed: () => onSelected(section),
-              icon: Icon(icon),
-              label: Text(label),
-            ),
     );
   }
 }

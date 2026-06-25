@@ -1,9 +1,15 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../app/app_persistence.dart';
 import '../domain/ide_settings.dart';
 
 class SettingsController extends ChangeNotifier {
-  IdeSettings _settings = IdeSettings.initial();
+  SettingsController({AppPersistence? persistence})
+    : _persistence = persistence,
+      _settings = persistence?.loadSettings() ?? IdeSettings.initial();
+
+  final AppPersistence? _persistence;
+  IdeSettings _settings;
   String _statusMessage = 'الإعدادات محفوظة مؤقتا داخل الجلسة الحالية فقط.';
 
   IdeSettings get settings => _settings;
@@ -23,6 +29,26 @@ class SettingsController extends ChangeNotifier {
 
   void updateLibrariesServerUrl(String value) {
     _update(_settings.copyWith(librariesServerUrl: value));
+  }
+
+  void loadSettings() {
+    if (_persistence == null) {
+      return;
+    }
+
+    _settings = _persistence.loadSettings();
+    _statusMessage = 'تم استعادة الإعدادات المحفوظة.';
+    notifyListeners();
+  }
+
+  Future<void> persistSettings() async {
+    if (_persistence == null) {
+      return;
+    }
+
+    await _persistence.saveSettings(_settings);
+    _statusMessage = 'تم حفظ الإعدادات.';
+    notifyListeners();
   }
 
   void reset() {

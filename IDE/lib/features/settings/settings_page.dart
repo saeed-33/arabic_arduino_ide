@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'application/settings_controller.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, required this.controller});
+
+  final SettingsController controller;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -15,12 +17,19 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    _controller = SettingsController();
+    _controller = widget.controller;
+  }
+
+  @override
+  void didUpdateWidget(SettingsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _controller = widget.controller;
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
     super.dispose();
   }
 
