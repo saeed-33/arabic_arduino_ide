@@ -1,9 +1,0 @@
-*.class
-*.java
-*.pyc
-*.tokens
-*.interp
-__pycache__/
-.venv/
-/.antlr
-/tools
